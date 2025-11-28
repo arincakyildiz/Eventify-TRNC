@@ -3039,13 +3039,18 @@ function setupPrivacyLayer() {
 let currentRegistrationStep = 'information';
 
 function showRegistrationStep(step) {
+  console.log('[Eventify] showRegistrationStep called with:', step);
   currentRegistrationStep = step;
   const steps = document.querySelectorAll('.ef-registration-step');
+  console.log('[Eventify] Found registration steps:', steps.length);
   steps.forEach(s => s.style.display = 'none');
   
   const targetStep = document.querySelector(`[data-step="${step}"]`);
   if (targetStep) {
     targetStep.style.display = 'block';
+    console.log('[Eventify] Step shown:', step);
+  } else {
+    console.error('[Eventify] Step not found:', step);
   }
   
   updateRegistrationProgress(step);
@@ -3177,8 +3182,13 @@ function renderRegistrationCompleted(eventId, participantsData) {
 }
 
 function setupRegistrationForm() {
+  console.log('[Eventify] setupRegistrationForm called');
   const layer = document.getElementById("registration-form-layer");
-  if (!layer) return;
+  if (!layer) {
+    console.error('[Eventify] registration-form-layer not found');
+    return;
+  }
+  console.log('[Eventify] registration-form-layer found');
 
   const closeBtn = layer.querySelector("[data-registration-close]");
   const cancelBtn = layer.querySelector("[data-registration-cancel]");
@@ -3265,7 +3275,9 @@ function setupRegistrationForm() {
 
   // Handle Next button - ONLY go to summary, DO NOT submit registration
   if (nextBtn) {
+    console.log('[Eventify] Next button found, adding event listener');
     nextBtn.addEventListener("click", (e) => {
+      console.log('[Eventify] Next button clicked');
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -3273,21 +3285,25 @@ function setupRegistrationForm() {
       // IMPORTANT: Only navigate to summary, do NOT submit registration
       const eventId = form ? form.dataset.eventId : null;
       if (!eventId) {
-        console.error("Event ID not found");
+        console.error("[Eventify] Event ID not found");
         return false;
       }
 
       const participantsData = validateParticipantData();
       if (!participantsData) {
+        console.log('[Eventify] Validation failed');
         return false;
       }
 
+      console.log('[Eventify] Showing summary, NOT submitting registration');
       // Only show summary, do NOT call submitRegistration here
       // submitRegistration is ONLY called in Confirm button handler
       renderRegistrationSummary(eventId, participantsData);
       showRegistrationStep('summary');
       return false;
     }, true); // Use capture phase to ensure it runs first
+  } else {
+    console.warn('[Eventify] Next button not found!');
   }
 
   // Handle Confirm button - ONLY place where submitRegistration is called
@@ -3350,6 +3366,7 @@ function setupHero() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log('[Eventify] DOMContentLoaded - App version 20250127.2');
   setupNavigation();
   setupMobileNav();
   setupUserProfileMenu();
