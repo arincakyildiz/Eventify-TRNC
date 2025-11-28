@@ -3190,12 +3190,29 @@ function setupRegistrationForm() {
   const confirmBtn = layer.querySelector("[data-registration-confirm]");
   const closeCompletedBtn = layer.querySelector("[data-registration-close-completed]");
 
-  // Prevent form submission
+  // Prevent form submission completely
   if (form) {
+    // Prevent any form submission
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+    
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+      e.stopPropagation();
       return false;
-    });
+    }, true); // Use capture phase
+    
+    // Also prevent on form buttons
+    form.addEventListener("click", (e) => {
+      const target = e.target;
+      if (target && (target.type === "submit" || target.hasAttribute("data-registration-next"))) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
   }
 
   if (closeBtn) {
@@ -3243,6 +3260,7 @@ function setupRegistrationForm() {
     if (nextButton) {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       
       const eventId = form ? form.dataset.eventId : null;
       if (!eventId) {
@@ -3257,35 +3275,37 @@ function setupRegistrationForm() {
 
       renderRegistrationSummary(eventId, participantsData);
       showRegistrationStep('summary');
-      return;
+      return false;
     }
     
     // Handle layer background click (close form)
     if (e.target === layer) {
       closeRegistrationForm();
     }
-  });
+  }, true); // Use capture phase
 
   // Also keep direct listener as backup
   if (nextBtn) {
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       
       const eventId = form ? form.dataset.eventId : null;
       if (!eventId) {
         console.error("Event ID not found");
-        return;
+        return false;
       }
 
       const participantsData = validateParticipantData();
       if (!participantsData) {
-        return;
+        return false;
       }
 
       renderRegistrationSummary(eventId, participantsData);
       showRegistrationStep('summary');
-    });
+      return false;
+    }, true); // Use capture phase
   }
 
   if (confirmBtn) {
