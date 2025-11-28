@@ -3190,6 +3190,14 @@ function setupRegistrationForm() {
   const confirmBtn = layer.querySelector("[data-registration-confirm]");
   const closeCompletedBtn = layer.querySelector("[data-registration-close-completed]");
 
+  // Prevent form submission
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      return false;
+    });
+  }
+
   if (closeBtn) {
     closeBtn.addEventListener("click", () => closeRegistrationForm());
   }
@@ -3216,12 +3224,6 @@ function setupRegistrationForm() {
     });
   }
 
-  layer.addEventListener("click", (e) => {
-    if (e.target === layer) {
-      closeRegistrationForm();
-    }
-  });
-
   if (addParticipantBtn) {
     addParticipantBtn.addEventListener("click", () => {
       const participantsList = document.getElementById("registration-participants-list");
@@ -3234,14 +3236,52 @@ function setupRegistrationForm() {
     });
   }
 
+  // Use event delegation for Next button and layer background clicks
+  layer.addEventListener("click", (e) => {
+    // Handle Next button click (check button itself or parent)
+    const nextButton = e.target.closest("[data-registration-next]");
+    if (nextButton) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const eventId = form ? form.dataset.eventId : null;
+      if (!eventId) {
+        console.error("Event ID not found");
+        return;
+      }
+
+      const participantsData = validateParticipantData();
+      if (!participantsData) {
+        return;
+      }
+
+      renderRegistrationSummary(eventId, participantsData);
+      showRegistrationStep('summary');
+      return;
+    }
+    
+    // Handle layer background click (close form)
+    if (e.target === layer) {
+      closeRegistrationForm();
+    }
+  });
+
+  // Also keep direct listener as backup
   if (nextBtn) {
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      const eventId = form.dataset.eventId;
-      if (!eventId) return;
+      e.stopPropagation();
+      
+      const eventId = form ? form.dataset.eventId : null;
+      if (!eventId) {
+        console.error("Event ID not found");
+        return;
+      }
 
       const participantsData = validateParticipantData();
-      if (!participantsData) return;
+      if (!participantsData) {
+        return;
+      }
 
       renderRegistrationSummary(eventId, participantsData);
       showRegistrationStep('summary');
@@ -3251,11 +3291,18 @@ function setupRegistrationForm() {
   if (confirmBtn) {
     confirmBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      const eventId = form.dataset.eventId;
-      if (!eventId) return;
+      e.stopPropagation();
+      
+      const eventId = form ? form.dataset.eventId : null;
+      if (!eventId) {
+        console.error("Event ID not found");
+        return;
+      }
 
       const participantsData = validateParticipantData();
-      if (!participantsData) return;
+      if (!participantsData) {
+        return;
+      }
 
       renderRegistrationCompleted(eventId, participantsData);
       showRegistrationStep('completed');
