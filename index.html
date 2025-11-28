@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eventify TRNC - Community Event Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body data-initial-view="view-home" data-images-base="assets/images/">
+    <header class="ef-header">
+      <div class="ef-container ef-header-inner">
+        <div class="ef-header-left">
+          <div class="ef-logo">
+            <img
+              src="assets/images/eventify-trnc-logo.png"
+              alt="Eventify TRNC logo"
+              class="ef-logo-img"
+            />
+            <div class="ef-logo-text">
+              EVENTIFY <span>TRNC</span>
+            </div>
+          </div>
+          <nav class="ef-nav">
+            <button class="ef-nav-link active" data-view="view-home">
+              Home
+            </button>
+            <button class="ef-nav-link" data-view="view-events">Events</button>
+            <button class="ef-nav-link" data-view="view-calendar">
+              Calendar
+            </button>
+            <button class="ef-nav-link" data-view="view-about">Places</button>
+          </nav>
+        </div>
+        <div class="ef-header-right">
+          <div class="ef-notification-menu">
+            <button
+              class="ef-icon-btn"
+              type="button"
+              id="header-notifications-btn"
+              aria-label="View notifications"
+            >
+              🔔
+              <span class="ef-notification-badge" id="notification-badge" style="display: none;"></span>
+            </button>
+            <div
+              class="ef-notification-menu-panel"
+              id="header-notifications-menu"
+            >
+              <!-- Filled by JS -->
+            </div>
+          </div>
+          <div class="ef-user-menu">
+            <button
+              class="ef-user-pill"
+              id="header-user-pill"
+              type="button"
+              aria-live="polite"
+              aria-haspopup="true"
+              aria-expanded="false"
+            ></button>
+            <div class="ef-user-menu-panel" id="header-user-menu">
+              <button type="button" data-user-nav="registrations">
+                My registrations
+              </button>
+              <button type="button" data-user-nav="notifications">
+                Notifications
+              </button>
+              <button type="button" data-user-nav="logout">
+                Sign out
+              </button>
+            </div>
+          </div>
+          <button
+            class="ef-auth-btn ef-auth-btn-ghost"
+            type="button"
+            id="nav-signup"
+          >
+            Sign Up
+          </button>
+          <button
+            class="ef-auth-btn ef-auth-btn-primary"
+            type="button"
+            id="nav-user-login"
+          >
+            Login
+          </button>
+          <button
+            class="ef-nav-toggle"
+            type="button"
+            aria-label="Toggle navigation"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="ef-main">
+      <!-- PUBLIC: HOME -->
+      <section id="view-home" class="ef-view active">
+        <section class="ef-hero">
+          <div class="ef-hero-text">
+            <p class="ef-hero-kicker">Now community events;</p>
+            <h1>Find your next event — instantly</h1>
+            <p>
+              Discover festivals, workshops, sports tournaments, and cultural
+              activities organized by municipalities across Northern Cyprus.
+            </p>
+            <button type="button" class="ef-btn ef-hero-cta">
+              <span class="ef-hero-cta-text">Explore Events</span>
+              <span class="ef-hero-cta-arrow">➜</span>
+            </button>
+          </div>
+          <div class="ef-hero-dots">
+            <button
+              type="button"
+              class="ef-hero-dot active"
+              data-hero-dot="0"
+              aria-label="Show Nicosia view"
+            ></button>
+            <button
+              type="button"
+              class="ef-hero-dot"
+              data-hero-dot="1"
+              aria-label="Show Famagusta view"
+            ></button>
+            <button
+              type="button"
+              class="ef-hero-dot"
+              data-hero-dot="2"
+              aria-label="Show Kyrenia view"
+            ></button>
+          </div>
+        </section>
+
+        <div class="ef-container">
+          <section class="ef-category-bar">
+            <div class="ef-category-bar-header">
+              <span class="ef-category-label">Explore by category</span>
+            </div>
+            <div class="ef-category-pill-row">
+              <button
+                class="ef-category-pill ef-home-category-pill active"
+                data-category=""
+              >
+                All
+              </button>
+              <button
+                class="ef-category-pill ef-home-category-pill"
+                data-category="Sports"
+              >
+                Sports
+              </button>
+              <button
+                class="ef-category-pill ef-home-category-pill"
+                data-category="Culture"
+              >
+                Culture
+              </button>
+              <button
+                class="ef-category-pill ef-home-category-pill"
+                data-category="Education"
+              >
+                Education
+              </button>
+              <button
+                class="ef-category-pill ef-home-category-pill"
+                data-category="Environment"
+              >
+                Environment
+              </button>
+              <button
+                class="ef-category-pill ef-home-category-pill"
+                data-category="Music &amp; Entertainment"
+              >
+                Music &amp; Entertainment
+              </button>
+            </div>
+          </section>
+
+          <div class="ef-view-header">
+            <div>
+              <h2>Featured & upcoming events</h2>
+              <p>
+                A quick overview of events happening soon. Use filters to narrow down.
+              </p>
+            </div>
+            <div class="ef-filters">
+              <select id="home-filter-city">
+                <option value="">All Cities</option>
+                <option value="Nicosia">Nicosia</option>
+                <option value="Famagusta">Famagusta</option>
+                <option value="Kyrenia">Kyrenia</option>
+                <option value="Morphou">Morphou</option>
+                <option value="Iskele">Iskele</option>
+                <option value="Lefke">Lefke</option>
+              </select>
+              <select id="home-filter-category" class="ef-filter-hidden">
+                <option value="">All Categories</option>
+                <option value="Sports">Sports</option>
+                <option value="Culture">Culture</option>
+                <option value="Education">Education</option>
+                <option value="Environment">Environment</option>
+                <option value="Music &amp; Entertainment">
+                  Music &amp; Entertainment
+                </option>
+              </select>
+              <input
+                type="date"
+                id="home-filter-date"
+                aria-label="Filter by date"
+              />
+              <input
+                type="text"
+                id="home-filter-search"
+                placeholder="Search events..."
+                aria-label="Search events"
+              />
+              <button id="home-clear-filters" class="ef-btn ef-btn-ghost">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <section id="home-featured-list" class="ef-grid ef-event-grid">
+            <!-- Filled by JS -->
+          </section>
+        </div>
+      </section>
+
+      <!-- PUBLIC: EVENTS (FULL LIST) -->
+      <section id="view-events" class="ef-view">
+        <div class="ef-container">
+          <section class="ef-category-bar">
+            <div class="ef-category-bar-header">
+              <span class="ef-category-label">Event Categories</span>
+            </div>
+            <div class="ef-category-pill-row">
+              <button
+                class="ef-category-pill active"
+                data-category=""
+              >
+                All
+              </button>
+              <button
+                class="ef-category-pill"
+                data-category="Sports"
+              >
+                Sports
+              </button>
+              <button
+                class="ef-category-pill"
+                data-category="Culture"
+              >
+                Culture
+              </button>
+              <button
+                class="ef-category-pill"
+                data-category="Education"
+              >
+                Education
+              </button>
+              <button
+                class="ef-category-pill"
+                data-category="Environment"
+              >
+                Environment
+              </button>
+              <button
+                class="ef-category-pill"
+                data-category="Music &amp; Entertainment"
+              >
+                Music &amp; Entertainment
+              </button>
+            </div>
+          </section>
+
+          <div class="ef-view-header">
+            <div>
+              <h2>Upcoming Events</h2>
+              <p>
+                Filter by city, date, or search by event title.
+              </p>
+            </div>
+            <div class="ef-filters">
+              <select id="filter-city">
+                <option value="">All Cities</option>
+                <option value="Nicosia">Nicosia</option>
+                <option value="Famagusta">Famagusta</option>
+                <option value="Kyrenia">Kyrenia</option>
+                <option value="Morphou">Morphou</option>
+                <option value="Iskele">Iskele</option>
+                <option value="Lefke">Lefke</option>
+              </select>
+              <select id="filter-category" class="ef-filter-hidden">
+                <option value="">All Categories</option>
+                <option value="Sports">Sports</option>
+                <option value="Culture">Culture</option>
+                <option value="Education">Education</option>
+                <option value="Environment">Environment</option>
+                <option value="Music &amp; Entertainment">
+                  Music &amp; Entertainment
+                </option>
+              </select>
+              <input
+                type="date"
+                id="filter-date"
+                aria-label="Filter by date"
+              />
+              <input
+                type="text"
+                id="filter-search"
+                placeholder="Search events..."
+                aria-label="Search events"
+              />
+              <button id="clear-filters" class="ef-btn ef-btn-ghost">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <section id="upcoming-notifications" class="ef-notifications">
+            <!-- Filled by JS: upcoming events where user is registered -->
+          </section>
+
+          <section id="event-list" class="ef-grid ef-event-grid">
+            <!-- Event cards rendered by JS -->
+          </section>
+        </div>
+      </section>
+
+      <div class="ef-container">
+        <!-- PUBLIC: CALENDAR -->
+        <section id="view-calendar" class="ef-view">
+          <div class="ef-view-header">
+            <div>
+              <h1>Event Calendar</h1>
+              <p>
+                Browse all upcoming events in a calendar layout. Switch between
+                month, week, or day to focus on the events you care about. Click
+                any event title to open full details.
+              </p>
+            </div>
+          </div>
+
+          <section class="ef-card ef-calendar-card">
+            <div class="ef-calendar-toolbar">
+              <div class="ef-calendar-toolbar-left">
+                <button
+                  class="ef-btn ef-btn-ghost ef-btn-sm"
+                  type="button"
+                  id="calendar-today"
+                >
+                  Today
+                </button>
+                <div class="ef-calendar-nav-group">
+                  <button
+                    type="button"
+                    class="ef-icon-btn ef-calendar-nav"
+                    id="calendar-prev"
+                    aria-label="Previous month"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    class="ef-icon-btn ef-calendar-nav"
+                    id="calendar-next"
+                    aria-label="Next month"
+                  >
+                    ›
+                  </button>
+                </div>
+                <h2 class="ef-section-title ef-calendar-month" id="calendar-month-label">
+                  <!-- filled by JS -->
+                </h2>
+              </div>
+              <div class="ef-calendar-toolbar-right">
+                <button
+                  type="button"
+                  class="ef-calendar-view-btn active"
+                  data-calendar-view="month"
+                >
+                  Ay
+                </button>
+                <button
+                  type="button"
+                  class="ef-calendar-view-btn"
+                  data-calendar-view="week"
+                >
+                  Hafta
+                </button>
+                <button
+                  type="button"
+                  class="ef-calendar-view-btn"
+                  data-calendar-view="day"
+                >
+                  Gün
+                </button>
+              </div>
+            </div>
+
+            <div id="calendar-list" class="ef-calendar-list">
+              <!-- Filled by JS -->
+            </div>
+            <div class="ef-calendar-hint">
+              Hint: Click a day to see the top events. Click an event title to
+              open full details and register.
+            </div>
+          </section>
+        </section>
+
+        <!-- PUBLIC: ABOUT -->
+        <section id="view-about" class="ef-view">
+          <div class="ef-view-header">
+            <div>
+              <h1>About Eventify TRNC</h1>
+              <p>
+                Eventify TRNC is a prototype community event management platform
+                designed for municipalities and citizens in the Turkish Republic
+                of Northern Cyprus.
+              </p>
+            </div>
+          </div>
+
+          <section class="ef-grid ef-grid-2">
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Nicosia"
+              data-place-key="City Park"
+            >
+              <h2 class="ef-section-title">For citizens</h2>
+              <p class="ef-text-muted">
+                Citizens can discover local events, register for activities, and
+                keep track of their upcoming participations in one place.
+              </p>
+              <ul class="ef-about-list">
+                <li>Browse a calendar of community events.</li>
+                <li>Filter by city, category, and date.</li>
+                <li>Register or cancel participation with one click.</li>
+              </ul>
+            </article>
+            <article class="ef-card">
+              <h2 class="ef-section-title">For municipalities</h2>
+              <p class="ef-text-muted">
+                Municipal staff can manage event information and monitor basic
+                statistics about attendance and popular event types.
+              </p>
+              <ul class="ef-about-list">
+                <li>Create, edit, and publish events.</li>
+                <li>See registrations per event.</li>
+                <li>Review popular categories and participation trends.</li>
+              </ul>
+            </article>
+          </section>
+
+          <section class="ef-view-header" style="margin-top: 2rem">
+            <div>
+              <h2>Popular event locations across TRNC</h2>
+              <p>
+                Sample venues where municipalities commonly host culture, sports,
+                education, and community events.
+              </p>
+            </div>
+          </section>
+
+          <section class="ef-grid ef-grid-2">
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Nicosia"
+              data-place-key="Ataturk Stadium"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/ataturk-stadium.jpg"
+                alt="Ataturk Stadium"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Ataturk Stadium</h3>
+              <p class="ef-text-muted">
+                Main athletics and football stadium in Nicosia, used for city-wide
+                runs and sports festivals.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 20,000 · Ideal for: large sports events
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Nicosia"
+              data-place-key="Avenue Cinemax"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/avenue.jpg"
+                alt="Avenue Cinemax Nicosia"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Avenue Cinemax – Nicosia</h3>
+              <p class="ef-text-muted">
+                Modern cinema and event venue on Dereboyu, popular for film
+                screenings and premieres.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 500 · Ideal for: movie nights &amp; premieres
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Kyrenia"
+              data-place-key="Bellapais"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/bellapais-manastiri.jpg"
+                alt="Bellapais Monastery"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Bellapais Monastery</h3>
+              <p class="ef-text-muted">
+                Historic monastery overlooking Kyrenia, hosting open-air classical
+                music concerts and cultural nights.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 800 · Ideal for: culture &amp; music events
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Iskele"
+              data-place-key="Festival Area"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/bogazici-belediyesi-festival-alani.jpg"
+                alt="Iskele Municipality Festival Area"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Iskele Municipality Festival Area</h3>
+              <p class="ef-text-muted">
+                Open festival field used for summer fairs, concerts, and
+                municipality-led community celebrations.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 2,000 · Ideal for: festivals &amp; concerts
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Kyrenia"
+              data-place-key="Catalkoy Cultural Center"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/catalkoy-erol-avgoren-kultur-merkezi.jpg"
+                alt="Catalkoy Municipality Cultural Center"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">
+                Catalkoy Municipality Cultural Center
+              </h3>
+              <p class="ef-text-muted">
+                Cultural center in Catalkoy for theatre, workshops, and local
+                community events.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 300 · Ideal for: culture &amp; education events
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Famagusta"
+              data-place-key="Rauf Raif Denktas"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/rauf-raif-denktas-kultur-ve-kongre-sarayi.jpg"
+                alt="Rauf Raif Denktaş Culture and Congress Center"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">
+                Rauf Raif Denktaş Culture and Congress Center
+              </h3>
+              <p class="ef-text-muted">
+                Modern congress and culture center in Famagusta for conferences,
+                ceremonies, and large cultural programs.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 1,000 · Ideal for: conferences &amp; concerts
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Nicosia"
+              data-place-key="BKM Mutfak"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/BKM-Mutfak-Nicosia.jpg"
+                alt="BKM Mutfak Nicosia"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">BKM Mutfak Nicosia</h3>
+              <p class="ef-text-muted">
+                Popular comedy and performance venue where stand-up shows and
+                special theatre nights are organised.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 250 · Ideal for: stand-up &amp; theatre
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Famagusta"
+              data-place-key="Innovation Center"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/famagusta-coding-camp.jpg"
+                alt="Famagusta Innovation Center"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Famagusta Innovation Center</h3>
+              <p class="ef-text-muted">
+                Modern venue for hackathons, coding camps, and digital skills
+                workshops for youth.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 150 · Ideal for: digital &amp; youth programs
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Kyrenia"
+              data-place-key="Harbour"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/girne-antikliman.jpg"
+                alt="Kyrenia Old Harbour Stage"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Kyrenia Old Harbour Stage</h3>
+              <p class="ef-text-muted">
+                Harbourfront stage at Kyrenia Old Harbour for sunset concerts and
+                harbour festivals.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 500 · Ideal for: concerts &amp; harbour events
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Nicosia"
+              data-place-key="City Park"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/nicosia.jpg"
+                alt="Nicosia City Park"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Nicosia City Park</h3>
+              <p class="ef-text-muted">
+                Green area in Nicosia for smaller outdoor workshops, children’s
+                activities, and community meetups.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 300 · Ideal for: family &amp; community events
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Iskele"
+              data-place-key="Iskele Seafront Promenade"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/city-cleanup-tree-planting.jpg"
+                alt="Iskele Seafront Promenade"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Iskele Seafront Promenade</h3>
+              <p class="ef-text-muted">
+                Coastal promenade used for environmental campaigns, beach clean-ups,
+                and outdoor fitness gatherings.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 500 · Ideal for: sustainability &amp; civic events
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Iskele"
+              data-place-key="Iskele Seafront Open Cinema Area"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/iskele-movie-night.jpg"
+                alt="Iskele Seafront Open Cinema Area"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Iskele Seafront Open Cinema Area</h3>
+              <p class="ef-text-muted">
+                Outdoor cinema terrace with tiered seating, perfect for family movie
+                nights and cultural screenings.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 300 · Ideal for: movie nights &amp; evening shows
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Morphou"
+              data-place-key="Morphou Central Square"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/morphou-food-fair.jpg"
+                alt="Morphou Central Square"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Morphou Central Square</h3>
+              <p class="ef-text-muted">
+                Historic town square that hosts food fairs, artisan markets, and
+                community celebrations.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 600 · Ideal for: fairs &amp; cultural markets
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+            <article
+              class="ef-card ef-place-card"
+              data-place-city="Lefke"
+              data-place-key="Lefke Community Center"
+            >
+              <img
+                class="ef-place-thumb"
+                src="assets/images/lefke-green-living.jpg"
+                alt="Lefke Community Center"
+                loading="lazy"
+              />
+              <h3 class="ef-section-title">Lefke Community Center</h3>
+              <p class="ef-text-muted">
+                Multi-purpose center dedicated to sustainability workshops, local
+                meetups, and training sessions.
+              </p>
+              <p class="ef-text-muted">
+                Capacity: approx. 200 · Ideal for: education &amp; eco programs
+              </p>
+              <div class="ef-place-events" data-place-events></div>
+            </article>
+          </section>
+        </section>
+
+        <!-- PUBLIC: MY REGISTRATIONS -->
+        <section id="view-registrations" class="ef-view">
+          <div class="ef-view-header">
+            <div>
+              <h1>My Registrations</h1>
+              <p>
+                Events that the currently signed-in user is registered for.
+              </p>
+            </div>
+          </div>
+
+          <section id="my-registrations-list" class="ef-list">
+            <!-- Filled by JS -->
+          </section>
+        </section>
+
+        <!-- ADMIN: LOGIN -->
+        <section id="view-admin-login" class="ef-view">
+          <div class="ef-view-header">
+            <div>
+              <h1>Administrator Login</h1>
+              <p>Access the municipality event management panel.</p>
+            </div>
+          </div>
+
+          <section class="ef-grid">
+            <article class="ef-card">
+              <h2 class="ef-section-title">Sign in</h2>
+              <form id="admin-login-form" class="ef-form">
+                <div class="ef-form-group">
+                  <label for="admin-email">Email address</label>
+                  <input
+                    type="email"
+                    id="admin-email"
+                    placeholder="admin@eventify.trnc"
+                    required
+                  />
+                </div>
+                <div class="ef-form-group">
+                  <label for="admin-password">Password</label>
+                  <input
+                    type="password"
+                    id="admin-password"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+                <p class="ef-text-muted" style="font-size: 0.8rem">
+                  Demo credentials:
+                  <strong>admin@eventify.trnc</strong> / <strong>admin123</strong>
+                </p>
+                <div class="ef-form-actions">
+                  <button type="submit" class="ef-btn">Login</button>
+                </div>
+              </form>
+            </article>
+          </section>
+        </section>
+
+        <!-- ADMIN: DASHBOARD -->
+        <section id="view-admin-dashboard" class="ef-view">
+          <div class="ef-view-header">
+            <div>
+              <h1>Municipality Admin Panel</h1>
+              <p>Manage community events and review participation statistics.</p>
+            </div>
+            <button class="ef-btn ef-btn-ghost" id="admin-logout-btn">
+              Logout
+            </button>
+          </div>
+
+          <div class="ef-admin-layout">
+            <aside class="ef-admin-sidebar">
+              <h2 class="ef-admin-sidebar-title">Menu</h2>
+              <button
+                class="ef-admin-link active"
+                data-admin-section="admin-events"
+              >
+                Events
+              </button>
+              <button
+                class="ef-admin-link"
+                data-admin-section="admin-create"
+              >
+                Create Event
+              </button>
+              <button
+                class="ef-admin-link"
+                data-admin-section="admin-stats"
+              >
+                Statistics
+              </button>
+            </aside>
+
+            <div class="ef-admin-content">
+              <!-- DASHBOARD SUMMARY -->
+              <div class="ef-grid ef-grid-3 ef-admin-summary">
+                <div class="ef-stat-card">
+                  <h3>Total Events</h3>
+                  <p id="stat-total-events" class="ef-stat-value">0</p>
+                </div>
+                <div class="ef-stat-card">
+                  <h3>Total Registrations</h3>
+                  <p id="stat-total-registrations" class="ef-stat-value">0</p>
+                </div>
+                <div class="ef-stat-card">
+                  <h3>Average Participants per Event</h3>
+                  <p
+                    id="stat-average-participants"
+                    class="ef-stat-value"
+                  >
+                    0
+                  </p>
+                </div>
+              </div>
+
+              <!-- ADMIN SECTION: EVENTS LIST -->
+              <section
+                id="admin-section-events"
+                class="ef-admin-section active"
+              >
+                <h2 class="ef-section-title">Events</h2>
+                <div id="admin-event-list" class="ef-list">
+                  <!-- Admin event rows rendered by JS -->
+                </div>
+              </section>
+
+              <!-- ADMIN SECTION: CREATE / EDIT -->
+              <section id="admin-section-create" class="ef-admin-section">
+                <h2 class="ef-section-title">Create / Edit Event</h2>
+                <form id="event-form" class="ef-form">
+                  <input type="hidden" id="event-id" />
+
+                  <div class="ef-form-group">
+                    <label for="event-title">Title</label>
+                    <input
+                      type="text"
+                      id="event-title"
+                      placeholder="e.g. Spring Culture Festival"
+                      required
+                    />
+                  </div>
+
+                  <div class="ef-form-row">
+                    <div class="ef-form-group">
+                      <label for="event-city">City</label>
+                      <select id="event-city" required>
+                        <option value="">Select city</option>
+                        <option value="Nicosia">Nicosia</option>
+                        <option value="Famagusta">Famagusta</option>
+                        <option value="Kyrenia">Kyrenia</option>
+                        <option value="Morphou">Morphou</option>
+                        <option value="Iskele">Iskele</option>
+                        <option value="Lefke">Lefke</option>
+                      </select>
+                    </div>
+
+                    <div class="ef-form-group">
+                      <label for="event-category">Category</label>
+                      <select id="event-category" required>
+                        <option value="">Select category</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Culture">Culture</option>
+                        <option value="Education">Education</option>
+                        <option value="Environment">Environment</option>
+                        <option value="Music &amp; Entertainment">
+                          Music &amp; Entertainment
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="ef-form-row">
+                    <div class="ef-form-group">
+                      <label for="event-date">Date</label>
+                      <input type="date" id="event-date" required />
+                    </div>
+
+                    <div class="ef-form-group">
+                      <label for="event-time">Time</label>
+                      <input type="time" id="event-time" required />
+                    </div>
+                  </div>
+
+                  <div class="ef-form-group">
+                    <label for="event-location">Location</label>
+                    <input
+                      type="text"
+                      id="event-location"
+                      placeholder="e.g. Nicosia City Park"
+                      required
+                    />
+                  </div>
+
+                  <div class="ef-form-row">
+                    <div class="ef-form-group">
+                      <label for="event-capacity">Participant limit</label>
+                      <input
+                        type="number"
+                        id="event-capacity"
+                        min="1"
+                        placeholder="e.g. 200"
+                        required
+                      />
+                    </div>
+
+                    <div class="ef-form-group">
+                      <label for="event-image">Poster / Image URL</label>
+                      <input
+                        type="url"
+                        id="event-image"
+                        placeholder="nicosia.jpg"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="ef-form-group">
+                    <label for="event-description">Description</label>
+                    <textarea
+                      id="event-description"
+                      rows="3"
+                      placeholder="Short description of the event..."
+                      required
+                    ></textarea>
+                  </div>
+
+                  <div class="ef-form-actions">
+                    <button type="submit" class="ef-btn" id="save-event-btn">
+                      Save Event
+                    </button>
+                    <button
+                      type="button"
+                      class="ef-btn ef-btn-ghost"
+                      id="reset-event-form"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              <!-- ADMIN SECTION: STATISTICS -->
+              <section id="admin-section-stats" class="ef-admin-section">
+                <h2 class="ef-section-title">Statistics</h2>
+                <div class="ef-grid ef-grid-2 ef-mt-lg">
+                  <div>
+                    <h3 class="ef-section-title">Attendees per Event</h3>
+                    <div id="stat-event-attendance" class="ef-list">
+                      <!-- Filled by JS -->
+                    </div>
+                  </div>
+                  <div>
+                    <h3 class="ef-section-title">Most Popular Categories</h3>
+                    <div id="stat-popular-categories" class="ef-list">
+                      <!-- Filled by JS -->
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div id="event-detail-layer" class="ef-detail-layer">
+      <div class="ef-detail-panel">
+        <button class="ef-detail-close" data-detail-close>&times;</button>
+        <div class="ef-detail-hero-card">
+          <div class="ef-detail-hero-image" data-detail-image></div>
+          <div class="ef-detail-hero-body">
+            <span class="ef-badge" data-detail-category></span>
+            <h2 data-detail-title></h2>
+            <p class="ef-text-muted" data-detail-meta></p>
+            <p data-detail-description></p>
+            <div class="ef-detail-meta-grid">
+              <div>
+                <strong>Date</strong>
+                <span data-detail-date></span>
+              </div>
+              <div>
+                <strong>Time</strong>
+                <span data-detail-time></span>
+              </div>
+              <div>
+                <strong>Location</strong>
+                <span data-detail-location></span>
+              </div>
+            </div>
+            <div class="ef-modal-actions">
+              <div id="detail-registration-status"></div>
+              <button class="ef-btn ef-detail-register" data-detail-register>
+                Register Now
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="ef-detail-tabs">
+          <button class="active" data-detail-tab="info">Event Info</button>
+          <button data-detail-tab="guidelines">Things to Know</button>
+        </div>
+        <div class="ef-detail-sections">
+          <section id="detail-info" class="ef-detail-section active">
+            <h3>Event Detail</h3>
+            <p data-detail-long></p>
+          </section>
+          <section id="detail-guidelines" class="ef-detail-section">
+            <h3>Things to Know</h3>
+            <ul class="ef-detail-list">
+              <li>Doors open 30 minutes before the start time.</li>
+              <li>ID may be required at entry.</li>
+              <li>Tickets are non-transferable after confirmation.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div id="registration-form-layer" class="ef-detail-layer ef-auth-layer">
+      <div class="ef-auth-panel ef-registration-panel">
+        <div class="ef-registration-header">
+          <div>
+            <h2>Participant Information</h2>
+            <p class="ef-text-muted" id="registration-event-title">
+              <!-- Event title will be filled by JS -->
+            </p>
+          </div>
+          <button class="ef-detail-close" data-registration-close>&times;</button>
+        </div>
+
+        <div class="ef-registration-progress">
+          <div class="ef-progress-step completed">
+            <span class="ef-progress-step-number">1</span>
+            <span class="ef-progress-step-label">Ticket Selection</span>
+          </div>
+          <div class="ef-progress-step active">
+            <span class="ef-progress-step-number">2</span>
+            <span class="ef-progress-step-label">Information</span>
+          </div>
+          <div class="ef-progress-step">
+            <span class="ef-progress-step-number">3</span>
+            <span class="ef-progress-step-label">Summary</span>
+          </div>
+          <div class="ef-progress-step">
+            <span class="ef-progress-step-number">4</span>
+            <span class="ef-progress-step-label">Completed</span>
+          </div>
+        </div>
+
+        <form id="registration-form" class="ef-form ef-auth-form">
+          <div class="ef-registration-section">
+            <h3 class="ef-registration-section-title">Participant Information</h3>
+            <p class="ef-registration-section-hint">
+              Please fill in all participant information completely
+            </p>
+
+            <div id="registration-participants-list">
+              <!-- Participant cards will be added here by JS -->
+            </div>
+
+            <button
+              type="button"
+              class="ef-btn ef-btn-ghost ef-add-participant-btn"
+              id="add-participant-btn"
+            >
+              <span>+</span> Add Participant
+            </button>
+          </div>
+
+          <div class="ef-registration-footer">
+            <button type="button" class="ef-btn ef-btn-ghost" data-registration-back>
+              ← Back
+            </button>
+            <span class="ef-participant-count" id="participant-count">1 participant</span>
+            <button type="submit" class="ef-btn">
+              Next →
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="auth-layer" class="ef-detail-layer ef-auth-layer">
+      <div class="ef-auth-panel">
+        <button class="ef-detail-close" data-auth-close>&times;</button>
+        <div class="ef-auth-tabs">
+          <button class="active" data-auth-mode="signin">Sign in</button>
+          <button data-auth-mode="signup">Sign up</button>
+        </div>
+        <h2 id="auth-title">Sign in to register for events</h2>
+        <p class="ef-text-muted" id="auth-subtitle">
+          Use your email to receive a one-time verification code and complete
+          your registration.
+        </p>
+        <form id="auth-login-form" class="ef-form ef-auth-form">
+          <!-- Sign in fields -->
+          <div class="ef-signin-fields ef-auth-mode-section" data-auth-section="signin">
+            <div class="ef-form-group">
+              <label for="signin-identifier">Email address</label>
+              <input
+                type="email"
+                id="signin-identifier"
+                class="auth-input"
+                autocomplete="email"
+              />
+            </div>
+            <div class="ef-form-group">
+              <label for="signin-password" class="ef-signin-label-row">
+                <span>Password</span>
+                <a href="#" class="ef-forgot-link" id="forgot-password-link"
+                  >Forgot password?</a
+                >
+              </label>
+              <div class="ef-password-field">
+                <input
+                  type="password"
+                  id="signin-password"
+                  class="auth-input"
+                  autocomplete="current-password"
+                />
+                <button
+                  type="button"
+                  class="ef-password-toggle"
+                  data-target="signin-password"
+                >
+                  👁
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sign up fields -->
+          <div
+            class="ef-signup-fields ef-auth-mode-section"
+            data-auth-section="signup"
+            style="display: none"
+          >
+            <div class="ef-form-group">
+              <label for="signup-fullname">Full name</label>
+              <input
+                type="text"
+                id="signup-fullname"
+                class="auth-input"
+                autocomplete="name"
+              />
+            </div>
+            <div class="ef-form-group">
+              <label for="signup-email">Email</label>
+              <input
+                type="email"
+                id="signup-email"
+                class="auth-input"
+                autocomplete="email"
+              />
+            </div>
+            <div class="ef-form-group">
+              <label for="signup-password">Password</label>
+              <div class="ef-password-field">
+                <input
+                  type="password"
+                  id="signup-password"
+                  class="auth-input"
+                  autocomplete="new-password"
+                />
+                <button
+                  type="button"
+                  class="ef-password-toggle"
+                  data-target="signup-password"
+                >
+                  👁
+                </button>
+              </div>
+              <p class="ef-auth-help">
+                Password should be at least 8 characters and include at least one uppercase letter and a dot (.).
+              </p>
+            </div>
+            <div class="ef-form-group">
+              <label for="signup-password-confirm">Confirm password</label>
+              <div class="ef-password-field">
+                <input
+                  type="password"
+                  id="signup-password-confirm"
+                  class="auth-input"
+                  autocomplete="new-password"
+                />
+                <button
+                  type="button"
+                  class="ef-password-toggle"
+                  data-target="signup-password-confirm"
+                >
+                  👁
+                </button>
+              </div>
+            </div>
+            <div class="ef-form-group" id="signup-code-group" style="display: none">
+              <label for="signup-code">Verification code</label>
+              <input
+                type="text"
+                id="signup-code"
+                class="auth-input"
+                placeholder="Enter 6-digit code"
+              />
+              <p class="ef-auth-help">
+                Enter the code sent to your email to complete your registration.
+              </p>
+            </div>
+            <div class="ef-form-group">
+              <label for="signup-country">Your Country/Region</label>
+              <select id="signup-country" class="auth-select">
+                <option value="">Select a country/region</option>
+                <option value="af">Afghanistan</option>
+                <option value="al">Albania</option>
+                <option value="dz">Algeria</option>
+                <option value="ad">Andorra</option>
+                <option value="ao">Angola</option>
+                <option value="ar">Argentina</option>
+                <option value="am">Armenia</option>
+                <option value="au">Australia</option>
+                <option value="at">Austria</option>
+                <option value="az">Azerbaijan</option>
+                <option value="bs">Bahamas</option>
+                <option value="bh">Bahrain</option>
+                <option value="bd">Bangladesh</option>
+                <option value="bb">Barbados</option>
+                <option value="by">Belarus</option>
+                <option value="be">Belgium</option>
+                <option value="bz">Belize</option>
+                <option value="bj">Benin</option>
+                <option value="bt">Bhutan</option>
+                <option value="bo">Bolivia</option>
+                <option value="ba">Bosnia and Herzegovina</option>
+                <option value="bw">Botswana</option>
+                <option value="br">Brazil</option>
+                <option value="bn">Brunei Darussalam</option>
+                <option value="bg">Bulgaria</option>
+                <option value="bf">Burkina Faso</option>
+                <option value="bi">Burundi</option>
+                <option value="kh">Cambodia</option>
+                <option value="cm">Cameroon</option>
+                <option value="ca">Canada</option>
+                <option value="cv">Cape Verde</option>
+                <option value="cf">Central African Republic</option>
+                <option value="td">Chad</option>
+                <option value="cl">Chile</option>
+                <option value="cn">China</option>
+                <option value="co">Colombia</option>
+                <option value="km">Comoros</option>
+                <option value="cg">Congo</option>
+                <option value="cd">Congo, Democratic Republic</option>
+                <option value="cr">Costa Rica</option>
+                <option value="ci">Côte d’Ivoire</option>
+                <option value="hr">Croatia</option>
+                <option value="cu">Cuba</option>
+                <option value="cy">Cyprus</option>
+                <option value="cz">Czech Republic</option>
+                <option value="dk">Denmark</option>
+                <option value="dj">Djibouti</option>
+                <option value="do">Dominican Republic</option>
+                <option value="ec">Ecuador</option>
+                <option value="eg">Egypt</option>
+                <option value="sv">El Salvador</option>
+                <option value="gq">Equatorial Guinea</option>
+                <option value="er">Eritrea</option>
+                <option value="ee">Estonia</option>
+                <option value="sz">Eswatini</option>
+                <option value="et">Ethiopia</option>
+                <option value="fj">Fiji</option>
+                <option value="fi">Finland</option>
+                <option value="fr">France</option>
+                <option value="ga">Gabon</option>
+                <option value="gm">Gambia</option>
+                <option value="ge">Georgia</option>
+                <option value="de">Germany</option>
+                <option value="gh">Ghana</option>
+                <option value="gr">Greece</option>
+                <option value="gd">Grenada</option>
+                <option value="gt">Guatemala</option>
+                <option value="gn">Guinea</option>
+                <option value="gw">Guinea-Bissau</option>
+                <option value="gy">Guyana</option>
+                <option value="ht">Haiti</option>
+                <option value="hn">Honduras</option>
+                <option value="hk">Hong Kong</option>
+                <option value="hu">Hungary</option>
+                <option value="is">Iceland</option>
+                <option value="in">India</option>
+                <option value="id">Indonesia</option>
+                <option value="ir">Iran</option>
+                <option value="iq">Iraq</option>
+                <option value="ie">Ireland</option>
+                <option value="il">Israel</option>
+                <option value="it">Italy</option>
+                <option value="jm">Jamaica</option>
+                <option value="jp">Japan</option>
+                <option value="jo">Jordan</option>
+                <option value="kz">Kazakhstan</option>
+                <option value="ke">Kenya</option>
+                <option value="ki">Kiribati</option>
+                <option value="kr">Korea, Republic of</option>
+                <option value="kw">Kuwait</option>
+                <option value="kg">Kyrgyzstan</option>
+                <option value="la">Lao PDR</option>
+                <option value="lv">Latvia</option>
+                <option value="lb">Lebanon</option>
+                <option value="ls">Lesotho</option>
+                <option value="lr">Liberia</option>
+                <option value="ly">Libya</option>
+                <option value="li">Liechtenstein</option>
+                <option value="lt">Lithuania</option>
+                <option value="lu">Luxembourg</option>
+                <option value="mo">Macao</option>
+                <option value="mg">Madagascar</option>
+                <option value="mw">Malawi</option>
+                <option value="my">Malaysia</option>
+                <option value="mv">Maldives</option>
+                <option value="ml">Mali</option>
+                <option value="mt">Malta</option>
+                <option value="mh">Marshall Islands</option>
+                <option value="mr">Mauritania</option>
+                <option value="mu">Mauritius</option>
+                <option value="mx">Mexico</option>
+                <option value="fm">Micronesia</option>
+                <option value="md">Moldova</option>
+                <option value="mc">Monaco</option>
+                <option value="mn">Mongolia</option>
+                <option value="me">Montenegro</option>
+                <option value="ma">Morocco</option>
+                <option value="mz">Mozambique</option>
+                <option value="mm">Myanmar</option>
+                <option value="na">Namibia</option>
+                <option value="nr">Nauru</option>
+                <option value="np">Nepal</option>
+                <option value="nl">Netherlands</option>
+                <option value="nz">New Zealand</option>
+                <option value="ni">Nicaragua</option>
+                <option value="ne">Niger</option>
+                <option value="ng">Nigeria</option>
+                <option value="mk">North Macedonia</option>
+                <option value="no">Norway</option>
+                <option value="om">Oman</option>
+                <option value="pk">Pakistan</option>
+                <option value="pw">Palau</option>
+                <option value="ps">Palestine</option>
+                <option value="pa">Panama</option>
+                <option value="pg">Papua New Guinea</option>
+                <option value="py">Paraguay</option>
+                <option value="pe">Peru</option>
+                <option value="ph">Philippines</option>
+                <option value="pl">Poland</option>
+                <option value="pt">Portugal</option>
+                <option value="qa">Qatar</option>
+                <option value="ro">Romania</option>
+                <option value="ru">Russian Federation</option>
+                <option value="rw">Rwanda</option>
+                <option value="kn">Saint Kitts and Nevis</option>
+                <option value="lc">Saint Lucia</option>
+                <option value="vc">
+                  Saint Vincent and the Grenadines
+                </option>
+                <option value="ws">Samoa</option>
+                <option value="sm">San Marino</option>
+                <option value="st">Sao Tome and Principe</option>
+                <option value="sa">Saudi Arabia</option>
+                <option value="sn">Senegal</option>
+                <option value="rs">Serbia</option>
+                <option value="sc">Seychelles</option>
+                <option value="sl">Sierra Leone</option>
+                <option value="sg">Singapore</option>
+                <option value="sk">Slovakia</option>
+                <option value="si">Slovenia</option>
+                <option value="sb">Solomon Islands</option>
+                <option value="so">Somalia</option>
+                <option value="za">South Africa</option>
+                <option value="es">Spain</option>
+                <option value="lk">Sri Lanka</option>
+                <option value="sd">Sudan</option>
+                <option value="sr">Suriname</option>
+                <option value="se">Sweden</option>
+                <option value="ch">Switzerland</option>
+                <option value="sy">Syrian Arab Republic</option>
+                <option value="tw">Taiwan</option>
+                <option value="tj">Tajikistan</option>
+                <option value="tz">Tanzania</option>
+                <option value="th">Thailand</option>
+                <option value="tl">Timor-Leste</option>
+                <option value="tg">Togo</option>
+                <option value="to">Tonga</option>
+                <option value="tt">Trinidad and Tobago</option>
+                <option value="tn">Tunisia</option>
+                <option value="tr">Türkiye</option>
+                <option value="tm">Turkmenistan</option>
+                <option value="ug">Uganda</option>
+                <option value="ua">Ukraine</option>
+                <option value="ae">United Arab Emirates</option>
+                <option value="uk">United Kingdom</option>
+                <option value="us">United States</option>
+                <option value="uy">Uruguay</option>
+                <option value="uz">Uzbekistan</option>
+                <option value="vu">Vanuatu</option>
+                <option value="ve">Venezuela</option>
+                <option value="vn">Viet Nam</option>
+                <option value="ye">Yemen</option>
+                <option value="zm">Zambia</option>
+                <option value="zw">Zimbabwe</option>
+              </select>
+            </div>
+            <label class="ef-auth-checkbox-row">
+              <input type="checkbox" id="signup-marketing" />
+              <span>Receive occasional product updates and announcements</span>
+            </label>
+            <label class="ef-auth-checkbox-row">
+              <input type="checkbox" id="signup-privacy" />
+              <span>
+                I agree to the
+                <span class="ef-auth-link" data-open-privacy>Privacy Policy</span>.
+              </span>
+            </label>
+          </div>
+
+          <div class="ef-form-actions">
+            <button type="submit" class="ef-btn" id="auth-login-btn">
+              Sign in
+            </button>
+            <button
+              type="button"
+              class="ef-btn ef-btn-ghost"
+              id="auth-logout-btn"
+            >
+              Sign out
+            </button>
+          </div>
+          <p class="ef-auth-status" id="auth-login-status"></p>
+        </form>
+        <div class="ef-auth-footer">
+          <p class="ef-auth-note" data-auth-note-signin>
+            New to Eventify TRNC? <span class="ef-auth-link" data-switch-auth="signup">
+              Create an account.
+            </span>
+          </p>
+          <p class="ef-auth-note" data-auth-note-signup style="display: none">
+            By creating an account, you agree to our Terms of Service and
+            <span class="ef-auth-link" data-open-privacy>Privacy Policy</span>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div id="privacy-layer" class="ef-detail-layer ef-privacy-layer">
+      <div class="ef-privacy-panel">
+        <button class="ef-detail-close" data-privacy-close>&times;</button>
+        <h2>Privacy Policy</h2>
+        <p>
+          This demo application stores your profile and registration data only
+          in your browser using localStorage. No real backend or external
+          service receives your information.
+        </p>
+        <p>
+          By creating an account, you accept that your email, full name,
+          selected country/region and event registrations are stored in your
+          browser so that Eventify TRNC can remember your sessions and
+          participation history.
+        </p>
+        <p>
+          You can remove this data at any time by clearing your browser storage
+          for this site.
+        </p>
+      </div>
+    </div>
+
+    <footer class="ef-footer">
+      <div class="ef-container ef-footer-content">
+        <div class="ef-footer-brand">
+          <div class="ef-footer-title">Eventify TRNC</div>
+          <p>Community event management for municipalities across TRNC.</p>
+        </div>
+        <div class="ef-footer-links">
+          <a href="#view-events">Home</a>
+          <a href="#view-about">About</a>
+          <a href="#view-registrations">My Registrations</a>
+        </div>
+        <div class="ef-footer-meta">
+          <span>© 2025 Eventify TRNC</span>
+          <span class="ef-footer-pill">Municipal Platform</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>
+
+
+
