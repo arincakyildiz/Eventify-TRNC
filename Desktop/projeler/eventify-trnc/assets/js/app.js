@@ -3205,10 +3205,11 @@ function setupRegistrationForm() {
       return false;
     }, true); // Use capture phase
     
-    // Also prevent on form buttons
+    // Also prevent on form buttons - but don't interfere with Next button
     form.addEventListener("click", (e) => {
       const target = e.target;
-      if (target && (target.type === "submit" || target.hasAttribute("data-registration-next"))) {
+      // Only prevent default for submit buttons, NOT for Next button
+      if (target && target.type === "submit") {
         e.preventDefault();
         e.stopPropagation();
       }
@@ -3253,44 +3254,23 @@ function setupRegistrationForm() {
     });
   }
 
-  // Use event delegation for Next button and layer background clicks
+  // Use event delegation for layer background clicks only
+  // Next button handled separately below
   layer.addEventListener("click", (e) => {
-    // Handle Next button click (check button itself or parent)
-    const nextButton = e.target.closest("[data-registration-next]");
-    if (nextButton) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      
-      const eventId = form ? form.dataset.eventId : null;
-      if (!eventId) {
-        console.error("Event ID not found");
-        return;
-      }
-
-      const participantsData = validateParticipantData();
-      if (!participantsData) {
-        return;
-      }
-
-      renderRegistrationSummary(eventId, participantsData);
-      showRegistrationStep('summary');
-      return false;
-    }
-    
     // Handle layer background click (close form)
     if (e.target === layer) {
       closeRegistrationForm();
     }
-  }, true); // Use capture phase
+  });
 
-  // Also keep direct listener as backup
+  // Handle Next button - ONLY go to summary, DO NOT submit registration
   if (nextBtn) {
     nextBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       
+      // IMPORTANT: Only navigate to summary, do NOT submit registration
       const eventId = form ? form.dataset.eventId : null;
       if (!eventId) {
         console.error("Event ID not found");
@@ -3302,35 +3282,42 @@ function setupRegistrationForm() {
         return false;
       }
 
+      // Only show summary, do NOT call submitRegistration here
+      // submitRegistration is ONLY called in Confirm button handler
       renderRegistrationSummary(eventId, participantsData);
       showRegistrationStep('summary');
       return false;
-    }, true); // Use capture phase
+    }, true); // Use capture phase to ensure it runs first
   }
 
+  // Handle Confirm button - ONLY place where submitRegistration is called
   if (confirmBtn) {
     confirmBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       
       const eventId = form ? form.dataset.eventId : null;
       if (!eventId) {
         console.error("Event ID not found");
-        return;
+        return false;
       }
 
       const participantsData = validateParticipantData();
       if (!participantsData) {
-        return;
+        return false;
       }
 
+      // Show completed step first
       renderRegistrationCompleted(eventId, participantsData);
       showRegistrationStep('completed');
       
-      // Submit registration after showing completed step
+      // IMPORTANT: Submit registration ONLY here, not in Next button
       setTimeout(() => {
         submitRegistration(eventId, participantsData);
       }, 500);
+      
+      return false;
     });
   }
 }
