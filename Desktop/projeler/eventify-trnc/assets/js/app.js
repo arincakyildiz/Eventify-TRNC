@@ -3195,7 +3195,7 @@ function setupRegistrationForm() {
   const cancelBtn = layer.querySelector("[data-registration-cancel]");
   const form = document.getElementById("registration-form");
   const addParticipantBtn = document.getElementById("add-participant-btn");
-  const nextBtn = layer.querySelector("[data-registration-next]");
+  const nextBtn = document.getElementById("registration-next-btn") || layer.querySelector("[data-registration-next]");
   const backBtn = layer.querySelector("[data-registration-back]");
   const backSummaryBtn = layer.querySelector("[data-registration-back-summary]");
   const confirmBtn = layer.querySelector("[data-registration-confirm]");
@@ -3211,20 +3211,14 @@ function setupRegistrationForm() {
     };
     
     form.addEventListener("submit", (e) => {
+      console.log('[Eventify] Form submit prevented');
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       return false;
     }, true); // Use capture phase
     
-    // Also prevent on form buttons - but don't interfere with Next button
-    form.addEventListener("click", (e) => {
-      const target = e.target;
-      // Only prevent default for submit buttons, NOT for Next button
-      if (target && target.type === "submit") {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, true);
+    // Remove the click handler that might interfere with Next button
   }
 
   if (closeBtn) {
@@ -3275,10 +3269,20 @@ function setupRegistrationForm() {
   });
 
   // Handle Next button - ONLY go to summary, DO NOT submit registration
-  if (nextBtn) {
+  // Use both ID selector and data attribute for maximum compatibility
+  const nextBtnById = document.getElementById("registration-next-btn");
+  const nextBtnFinal = nextBtnById || nextBtn;
+  
+  if (nextBtnFinal) {
     console.log('[Eventify] Next button found, adding event listener');
-    nextBtn.addEventListener("click", (e) => {
-      console.log('[Eventify] Next button clicked');
+    
+    // Remove any existing listeners first
+    const newNextBtn = nextBtnFinal.cloneNode(true);
+    nextBtnFinal.parentNode.replaceChild(newNextBtn, nextBtnFinal);
+    
+    // Add fresh event listener
+    newNextBtn.addEventListener("click", function(e) {
+      console.log('[Eventify] Next button clicked - handler fired');
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -3303,8 +3307,10 @@ function setupRegistrationForm() {
       showRegistrationStep('summary');
       return false;
     }, true); // Use capture phase to ensure it runs first
+    
+    console.log('[Eventify] Next button event listener added successfully');
   } else {
-    console.warn('[Eventify] Next button not found!');
+    console.error('[Eventify] Next button not found by ID or data attribute!');
   }
 
   // Handle Confirm button - ONLY place where submitRegistration is called
@@ -3372,7 +3378,7 @@ function setupHero() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log('[Eventify] DOMContentLoaded - App version 20250127.2');
+  console.log('[Eventify] DOMContentLoaded - App version 20250127.3');
   setupNavigation();
   setupMobileNav();
   setupUserProfileMenu();
