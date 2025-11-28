@@ -1209,7 +1209,19 @@ function closeRegistrationForm() {
   showRegistrationStep('information');
 }
 
+// Flag to prevent accidental submission from Next button
+let isSubmittingRegistration = false;
+
 function submitRegistration(eventId, participantsData) {
+  console.log('[Eventify] submitRegistration called - this should ONLY happen from Confirm button');
+  
+  if (isSubmittingRegistration) {
+    console.warn('[Eventify] submitRegistration already in progress, ignoring duplicate call');
+    return;
+  }
+  
+  isSubmittingRegistration = true;
+  
   const list = registrations[eventId] || [];
   
   participantsData.forEach((participant) => {
@@ -1237,6 +1249,9 @@ function submitRegistration(eventId, participantsData) {
   renderAdminEventList();
   renderMyRegistrations();
   renderHomeFeaturedList();
+  
+  isSubmittingRegistration = false;
+  console.log('[Eventify] submitRegistration completed');
 }
 
 function toggleRegistration(eventId) {
@@ -3201,24 +3216,42 @@ function setupRegistrationForm() {
   const confirmBtn = layer.querySelector("[data-registration-confirm]");
   const closeCompletedBtn = layer.querySelector("[data-registration-close-completed]");
 
-  // Prevent form submission completely
+  // Prevent form submission completely - AGGRESSIVE
   if (form) {
-    // Prevent any form submission
+    console.log('[Eventify] Setting up form submit prevention');
+    
+    // Remove form's submit capability entirely
+    form.setAttribute('novalidate', 'novalidate');
+    form.setAttribute('onsubmit', 'return false;');
+    
+    // Prevent any form submission - multiple layers
     form.onsubmit = function(e) {
-      e.preventDefault();
-      e.stopPropagation();
+      console.error('[Eventify] Form onsubmit triggered - PREVENTING');
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
       return false;
     };
     
-    form.addEventListener("submit", (e) => {
-      console.log('[Eventify] Form submit prevented');
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      return false;
-    }, true); // Use capture phase
+    // Add multiple event listeners to catch all submit attempts
+    ['submit', 'submit'].forEach(eventType => {
+      form.addEventListener(eventType, (e) => {
+        console.error('[Eventify] Form submit event caught - PREVENTING');
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+      }, true); // Use capture phase
+    });
     
-    // Remove the click handler that might interfere with Next button
+    // Also prevent on the window level
+    window.addEventListener('beforeunload', function(e) {
+      // Don't prevent, just log
+    });
+    
+    console.log('[Eventify] Form submit prevention setup complete');
   }
 
   if (closeBtn) {
@@ -3282,10 +3315,23 @@ function setupRegistrationForm() {
     
     // Add fresh event listener
     newNextBtn.addEventListener("click", function(e) {
+      console.log('[Eventify] ========================================');
       console.log('[Eventify] Next button clicked - handler fired');
+      console.log('[Eventify] IMPORTANT: This should NOT call submitRegistration');
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
+      
+      // CRITICAL: Prevent any form submission
+      if (form) {
+        form.onsubmit = function(ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          ev.stopImmediatePropagation();
+          console.error('[Eventify] Form submit attempted but prevented!');
+          return false;
+        };
+      }
       
       // IMPORTANT: Only navigate to summary, do NOT submit registration
       const eventId = form ? form.dataset.eventId : null;
@@ -3301,10 +3347,12 @@ function setupRegistrationForm() {
       }
 
       console.log('[Eventify] Showing summary, NOT submitting registration');
+      console.log('[Eventify] isSubmittingRegistration flag:', isSubmittingRegistration);
       // Only show summary, do NOT call submitRegistration here
       // submitRegistration is ONLY called in Confirm button handler
       renderRegistrationSummary(eventId, participantsData);
       showRegistrationStep('summary');
+      console.log('[Eventify] ========================================');
       return false;
     }, true); // Use capture phase to ensure it runs first
     
@@ -3336,6 +3384,7 @@ function setupRegistrationForm() {
       showRegistrationStep('completed');
       
       // IMPORTANT: Submit registration ONLY here, not in Next button
+      console.log('[Eventify] Confirm button clicked - submitting registration now');
       setTimeout(() => {
         submitRegistration(eventId, participantsData);
       }, 500);
