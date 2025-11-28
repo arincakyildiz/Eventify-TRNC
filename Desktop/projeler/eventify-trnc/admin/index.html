@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../assets/css/styles.css?v=20250127.3" />
+    <link rel="stylesheet" href="../assets/css/styles.css?v=20250127.4" />
   </head>
   <body
     data-initial-view="view-admin-login"
@@ -613,7 +613,20 @@
       </div>
     </footer>
 
-    <script src="../assets/js/app.js?v=20250127.3"></script>
+    <script>
+      // Force cache busting with timestamp
+      const cacheBuster = '?v=' + Date.now();
+      const script = document.createElement('script');
+      script.src = '../assets/js/app.js' + cacheBuster;
+      script.onerror = function() {
+        console.error('[Eventify] Failed to load app.js');
+        alert('JavaScript dosyası yüklenemedi. Lütfen sayfayı yenileyin.');
+      };
+      script.onload = function() {
+        console.log('[Eventify] app.js loaded successfully');
+      };
+      document.head.appendChild(script);
+    </script>
   </body>
 </html>
 

@@ -3378,7 +3378,10 @@ function setupHero() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log('[Eventify] DOMContentLoaded - App version 20250127.3');
+  console.log('[Eventify] ========================================');
+  console.log('[Eventify] DOMContentLoaded - App version 20250127.4');
+  console.log('[Eventify] JavaScript file loaded successfully');
+  console.log('[Eventify] ========================================');
   setupNavigation();
   setupMobileNav();
   setupUserProfileMenu();
