@@ -3182,13 +3182,14 @@ function renderRegistrationCompleted(eventId, participantsData) {
 }
 
 function setupRegistrationForm() {
-  console.log('[Eventify] setupRegistrationForm called');
-  const layer = document.getElementById("registration-form-layer");
-  if (!layer) {
-    console.error('[Eventify] registration-form-layer not found');
-    return;
-  }
-  console.log('[Eventify] registration-form-layer found');
+  try {
+    console.log('[Eventify] setupRegistrationForm called');
+    const layer = document.getElementById("registration-form-layer");
+    if (!layer) {
+      console.error('[Eventify] registration-form-layer not found');
+      return;
+    }
+    console.log('[Eventify] registration-form-layer found');
 
   const closeBtn = layer.querySelector("[data-registration-close]");
   const cancelBtn = layer.querySelector("[data-registration-cancel]");
@@ -3335,6 +3336,11 @@ function setupRegistrationForm() {
       
       return false;
     });
+  }
+  
+  console.log('[Eventify] setupRegistrationForm completed successfully');
+  } catch (error) {
+    console.error('[Eventify] Error in setupRegistrationForm:', error);
   }
 }
 
