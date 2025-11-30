@@ -538,6 +538,20 @@ function showView(viewId) {
       btn.classList.remove("active");
     }
   });
+
+  // Ensure content is rendered when switching to specific views
+  // Use a small delay to ensure DOM is ready
+  setTimeout(() => {
+    if (viewId === "view-registrations") {
+      renderMyRegistrations();
+    } else if (viewId === "view-events") {
+      renderEventList();
+    } else if (viewId === "view-calendar") {
+      renderEventCalendar();
+    } else if (viewId === "view-home") {
+      renderHomeFeaturedList();
+    }
+  }, 50);
 }
 
 function setupNavigation() {
@@ -557,16 +571,7 @@ function setupNavigation() {
 
       if (targetId) {
         showView(targetId);
-
-        if (targetId === "view-registrations") {
-          renderMyRegistrations();
-        } else if (targetId === "view-events") {
-          renderEventList();
-        } else if (targetId === "view-calendar") {
-          renderEventCalendar();
-        } else if (targetId === "view-home") {
-          renderHomeFeaturedList();
-        }
+        // render functions are now called automatically in showView with a delay
       }
     });
   });
@@ -698,12 +703,28 @@ function isEventFull(ev) {
 function isUserRegistered(ev) {
   const regs = registrations[ev.id] || [];
   if (!currentUser || !currentUser.email) return false;
-  return regs.some((r) => r.userId === currentUser.email);
+  const userEmail = currentUser.email.toLowerCase().trim();
+  // Check both userId and email fields for compatibility
+  return regs.some((r) => {
+    const regUserId = (r.userId || '').toLowerCase().trim();
+    const regEmail = (r.email || '').toLowerCase().trim();
+    return regUserId === userEmail || regEmail === userEmail;
+  });
 }
 
 function renderMyRegistrations() {
   const container = document.getElementById("my-registrations-list");
-  if (!container) return;
+  if (!container) {
+    console.warn('[Eventify] renderMyRegistrations: container not found');
+    return;
+  }
+
+  // Ensure events and registrations are loaded
+  if (!events || !Array.isArray(events)) {
+    console.warn('[Eventify] renderMyRegistrations: events not loaded yet');
+    container.innerHTML = '<div class="ef-empty-state">Loading...</div>';
+    return;
+  }
 
   if (!currentUser || !currentUser.email) {
     container.innerHTML =
@@ -711,7 +732,10 @@ function renderMyRegistrations() {
     return;
   }
 
-  const registeredEvents = events.filter((ev) => isUserRegistered(ev));
+  const registeredEvents = events.filter((ev) => {
+    if (!ev || !ev.id) return false;
+    return isUserRegistered(ev);
+  });
 
   if (registeredEvents.length === 0) {
     container.innerHTML =
@@ -2832,6 +2856,8 @@ function setCurrentUser(user) {
   currentUser = user || null;
   saveToStorage(STORAGE_KEY_USER, currentUser);
   updateUserLoginUI();
+  // Re-render registrations when user changes
+  renderMyRegistrations();
 }
 
 function setupUserAuth() {
