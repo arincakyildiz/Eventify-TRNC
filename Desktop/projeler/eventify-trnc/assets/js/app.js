@@ -18,9 +18,13 @@ const IMAGE_BASE_PATH = (() => {
 
 function resolveImageSrc(value) {
   if (!value) return "";
+  // If already a full URL (http, https, data, blob), return as is
   if (/^(https?:|data:|blob:)/i.test(value)) return value;
+  // If starts with / or ./ or ../, return as is (absolute or relative path)
   if (value.startsWith("/") || value.startsWith("./") || value.startsWith("../")) return value;
-  if (value.includes("/")) return value;
+  // If already contains a path separator and starts with assets/, return as is
+  if (value.includes("/") && value.startsWith("assets/")) return value;
+  // Otherwise, prepend IMAGE_BASE_PATH
   return `${IMAGE_BASE_PATH}${value}`;
 }
 
@@ -505,10 +509,20 @@ if (!events || !Array.isArray(events) || events.length === 0) {
 // ----- View Switching (Public + Admin) -----
 
 function showView(viewId) {
+  if (!viewId) {
+    console.warn('[Eventify] showView called without viewId');
+    return;
+  }
+  
+  console.log('[Eventify] Switching to view:', viewId);
+  
   const views = document.querySelectorAll(".ef-view");
+  console.log('[Eventify] Found', views.length, 'views');
+  
   views.forEach((view) => {
     if (view.id === viewId) {
       view.classList.add("active");
+      console.log('[Eventify] Activated view:', view.id);
     } else {
       view.classList.remove("active");
     }
@@ -528,15 +542,31 @@ function showView(viewId) {
 
 function setupNavigation() {
   const navButtons = document.querySelectorAll(".ef-nav-link");
+  
+  console.log('[Eventify] Setting up navigation for', navButtons.length, 'buttons');
 
   navButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
+    const targetId = btn.dataset.view;
+    console.log('[Eventify] Adding click listener to nav button:', targetId);
+    
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const targetId = btn.dataset.view;
+      console.log('[Eventify] Nav button clicked, switching to view:', targetId);
 
-      showView(targetId);
+      if (targetId) {
+        showView(targetId);
 
-      if (targetId === "view-registrations") {
-        renderMyRegistrations();
+        if (targetId === "view-registrations") {
+          renderMyRegistrations();
+        } else if (targetId === "view-events") {
+          renderEventList();
+        } else if (targetId === "view-calendar") {
+          renderEventCalendar();
+        } else if (targetId === "view-home") {
+          renderHomeFeaturedList();
+        }
       }
     });
   });
@@ -1113,6 +1143,7 @@ function createParticipantCard(index, isMain = false) {
           id="participant-phone-${index}"
           class="auth-input"
           placeholder="+90 555 123 4567"
+          maxlength="20"
           required
         />
       </div>
@@ -1123,6 +1154,7 @@ function createParticipantCard(index, isMain = false) {
             type="date"
             id="participant-birthdate-${index}"
             class="auth-input"
+            max="${todayISO()}"
             required
           />
         </div>
@@ -2832,6 +2864,13 @@ function setupUserAuth() {
           return;
         }
 
+        // Validate email format
+        if (!validateEmail(idValue)) {
+          alert("Please enter a valid email address (e.g., name@example.com).");
+          if (identifier) identifier.focus();
+          return;
+        }
+
         if (!stored || stored.password !== passValue || stored.email !== idValue) {
           alert("Incorrect email or password. Please check your details.");
           return;
@@ -2885,6 +2924,13 @@ function setupUserAuth() {
       // first step: basic validation + send code
       if (!fullNameVal || !emailVal || !passVal || !confirmVal || !countryVal) {
         alert("Please fill all required fields to create an account.");
+        return;
+      }
+
+      // Validate email format
+      if (!validateEmail(emailVal)) {
+        alert("Please enter a valid email address (e.g., name@example.com).");
+        if (signupEmail) signupEmail.focus();
         return;
       }
 
@@ -3090,6 +3136,34 @@ function updateRegistrationProgress(step) {
   });
 }
 
+// Validation helper functions
+function validateEmail(email) {
+  if (!email || typeof email !== 'string') return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+
+function validatePhone(phone) {
+  if (!phone || typeof phone !== 'string') return false;
+  // Remove all non-digit characters except + for international numbers
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  // Accept formats:
+  // - Turkish format: 05XX XXX XX XX (10 digits starting with 05)
+  // - International: +90XXXXXXXXXX (10-15 digits after +)
+  // - Without country code: 5XXXXXXXXX (10 digits starting with 5)
+  const turkishFormat = /^05\d{9}$/; // 05XX XXX XX XX
+  const turkishAltFormat = /^5\d{9}$/; // 5XX XXX XX XX (without leading 0)
+  const internationalFormat = /^\+\d{10,15}$/; // +90XXXXXXXXXX
+  const digitsOnly = cleaned.replace(/\+/g, '');
+  
+  if (turkishFormat.test(cleaned) || turkishAltFormat.test(cleaned)) return true;
+  if (internationalFormat.test(cleaned) && digitsOnly.length >= 10 && digitsOnly.length <= 15) return true;
+  // Also accept 10-15 digits with any formatting
+  if (digitsOnly.length >= 10 && digitsOnly.length <= 15) return true;
+  
+  return false;
+}
+
 function validateParticipantData() {
   const participantsList = document.getElementById("registration-participants-list");
   const cards = participantsList ? participantsList.querySelectorAll(".ef-participant-card") : [];
@@ -3101,8 +3175,9 @@ function validateParticipantData() {
 
   const participantsData = [];
   let isValid = true;
+  let errorMessage = "";
 
-  cards.forEach((card) => {
+  cards.forEach((card, index) => {
     const cardIndex = parseInt(card.dataset.participantIndex || "0", 10);
     const nameInput = card.querySelector(`#participant-name-${cardIndex}`);
     const emailInput = card.querySelector(`#participant-email-${cardIndex}`);
@@ -3112,6 +3187,7 @@ function validateParticipantData() {
 
     if (!nameInput || !emailInput || !phoneInput || !birthdateInput || !ticketSelect) {
       isValid = false;
+      errorMessage = "Please fill in all required fields for all participants.";
       return;
     }
 
@@ -3123,6 +3199,31 @@ function validateParticipantData() {
 
     if (!name || !email || !phone || !birthdate) {
       isValid = false;
+      errorMessage = `Please fill in all required fields for participant ${index + 1}.`;
+      return;
+    }
+
+    // Validate email format
+    if (!validateEmail(email)) {
+      isValid = false;
+      errorMessage = `Please enter a valid email address for participant ${index + 1} (e.g., name@example.com).`;
+      emailInput.focus();
+      return;
+    }
+
+    // Validate phone format
+    if (!validatePhone(phone)) {
+      isValid = false;
+      errorMessage = `Please enter a valid phone number for participant ${index + 1}.\n\nAccepted formats:\n- Turkish: 05XX XXX XX XX or 5XX XXX XX XX\n- International: +90XXXXXXXXXX\n- 10-15 digits`;
+      phoneInput.focus();
+      return;
+    }
+
+    // Validate birthdate - must not be in the future
+    if (birthdate > todayISO()) {
+      isValid = false;
+      errorMessage = `Please enter a valid birthdate for participant ${index + 1}. The birthdate cannot be in the future.`;
+      birthdateInput.focus();
       return;
     }
 
@@ -3136,7 +3237,7 @@ function validateParticipantData() {
   });
 
   if (!isValid) {
-    alert("Please fill in all required fields.");
+    alert(errorMessage || "Please fill in all required fields correctly.");
     return null;
   }
 
@@ -3426,11 +3527,18 @@ function setupHero() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+// Initialize the application
+let appInitialized = false;
+function initApp() {
+  if (appInitialized) {
+    console.log('[Eventify] App already initialized, skipping...');
+    return;
+  }
+  
   console.log('[Eventify] ========================================');
-  console.log('[Eventify] DOMContentLoaded - App version 20250127.4');
-  console.log('[Eventify] JavaScript file loaded successfully');
+  console.log('[Eventify] Initializing App - version 20250127.4');
   console.log('[Eventify] ========================================');
+  
   setupNavigation();
   setupMobileNav();
   setupUserProfileMenu();
@@ -3459,6 +3567,20 @@ document.addEventListener("DOMContentLoaded", () => {
   renderStatistics();
   renderPlaceEvents();
   showView(DEFAULT_VIEW);
-});
+  
+  appInitialized = true;
+  console.log('[Eventify] App initialization complete');
+}
+
+// Make initApp globally accessible
+window.initApp = initApp;
+
+// Try to initialize immediately if DOM is already loaded
+if (document.readyState === 'loading') {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  // DOM is already loaded, initialize immediately
+  initApp();
+}
 
 

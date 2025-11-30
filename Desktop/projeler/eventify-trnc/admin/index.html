@@ -624,6 +624,11 @@
       };
       script.onload = function() {
         console.log('[Eventify] app.js loaded successfully');
+        // If app.js loaded after DOMContentLoaded, initialize manually
+        if (typeof initApp === 'function' && document.readyState !== 'loading') {
+          console.log('[Eventify] DOM already loaded, calling initApp');
+          initApp();
+        }
       };
       document.head.appendChild(script);
     </script>
