@@ -389,21 +389,21 @@
                   class="ef-calendar-view-btn active"
                   data-calendar-view="month"
                 >
-                  Ay
+                  Month
                 </button>
                 <button
                   type="button"
                   class="ef-calendar-view-btn"
                   data-calendar-view="week"
                 >
-                  Hafta
+                  Week
                 </button>
                 <button
                   type="button"
                   class="ef-calendar-view-btn"
                   data-calendar-view="day"
                 >
-                  Gün
+                  Day
                 </button>
               </div>
             </div>
@@ -1219,6 +1219,28 @@
           Use your email to receive a one-time verification code and complete
           your registration.
         </p>
+
+        <!-- Demo verification banner shown after sign up step 1 -->
+        <div
+          id="auth-verification-banner"
+          class="ef-card ef-verification-banner"
+          style="display: none"
+        >
+          <div class="ef-verification-icon">✉️</div>
+          <div class="ef-verification-content">
+            <div class="ef-verification-title">Verification code sent</div>
+            <p class="ef-verification-text">
+              We have sent a 6-digit code to
+              <strong id="auth-verification-email"></strong>.
+              <br />
+              <span class="ef-text-muted">
+                Demo note: Your code is
+                <span id="auth-verification-code" class="ef-verification-code-pill"></span>.
+              </span>
+            </p>
+          </div>
+        </div>
+
         <form id="auth-login-form" class="ef-form ef-auth-form">
           <!-- Sign in fields -->
           <div class="ef-signin-fields ef-auth-mode-section" data-auth-section="signin">
@@ -1319,16 +1341,35 @@
                 </button>
               </div>
             </div>
-            <div class="ef-form-group" id="signup-code-group" style="display: none">
+            <div
+              class="ef-form-group ef-verification-group"
+              id="signup-code-group"
+              style="display: none"
+            >
               <label for="signup-code">Verification code</label>
-              <input
-                type="text"
-                id="signup-code"
-                class="auth-input"
-                placeholder="Enter 6-digit code"
-              />
+              <div class="ef-verification-row">
+                <input
+                  type="text"
+                  id="signup-code"
+                  class="auth-input ef-verification-input"
+                  placeholder="Enter 6-digit code"
+                  maxlength="6"
+                />
+                <button
+                  type="button"
+                  class="ef-btn ef-btn-ghost ef-verification-resend"
+                  id="signup-code-resend"
+                  disabled
+                >
+                  Resend code
+                </button>
+              </div>
               <p class="ef-auth-help">
                 Enter the code sent to your email to complete your registration.
+                <br />
+                <span id="signup-code-timer" class="ef-text-muted">
+                  Code expires in 02:00
+                </span>
               </p>
             </div>
             <div class="ef-form-group">
@@ -1615,21 +1656,33 @@
     <script>
       // Force cache busting with timestamp
       const cacheBuster = '?v=' + Date.now();
-      const script = document.createElement('script');
-      script.src = 'assets/js/app.js' + cacheBuster;
-      script.onerror = function() {
-        console.error('[Eventify] Failed to load app.js');
-        alert('JavaScript dosyası yüklenemedi. Lütfen sayfayı yenileyin.');
+      
+      // Load API service first
+      const apiScript = document.createElement('script');
+      apiScript.src = 'assets/js/api.js' + cacheBuster;
+      apiScript.onload = function() {
+        console.log('[Eventify] api.js loaded successfully');
+        
+        // Then load app.js
+        const appScript = document.createElement('script');
+        appScript.src = 'assets/js/app.js' + cacheBuster;
+        appScript.onerror = function() {
+          console.error('[Eventify] Failed to load app.js');
+          alert('JavaScript dosyası yüklenemedi. Lütfen sayfayı yenileyin.');
+        };
+        appScript.onload = function() {
+          console.log('[Eventify] app.js loaded successfully');
+          if (typeof initApp === 'function' && document.readyState !== 'loading') {
+            console.log('[Eventify] DOM already loaded, calling initApp');
+            initApp();
+          }
+        };
+        document.head.appendChild(appScript);
       };
-      script.onload = function() {
-        console.log('[Eventify] app.js loaded successfully');
-        // If app.js loaded after DOMContentLoaded, initialize manually
-        if (typeof initApp === 'function' && document.readyState !== 'loading') {
-          console.log('[Eventify] DOM already loaded, calling initApp');
-          initApp();
-        }
+      apiScript.onerror = function() {
+        console.error('[Eventify] Failed to load api.js');
       };
-      document.head.appendChild(script);
+      document.head.appendChild(apiScript);
     </script>
   </body>
 </html>

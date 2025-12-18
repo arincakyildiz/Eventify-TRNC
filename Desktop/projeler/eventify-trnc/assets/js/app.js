@@ -1,5 +1,5 @@
-// Eventify TRNC - Frontend Only Prototype
-// Simple in-memory data + localStorage to simulate backend behavior
+// Eventify TRNC - Full Stack Application
+// Connects to backend API for data persistence
 
 const STORAGE_KEY_EVENTS = "eventify_events";
 const STORAGE_KEY_REGISTRATIONS = "eventify_registrations";
@@ -9,7 +9,11 @@ const STORAGE_KEY_AUTH_USER = "eventify_auth_user";
 const STORAGE_KEY_MANAGED_USERS = "eventify_admin_users";
 const STORAGE_KEY_SCHEMA = "eventify_schema_version";
 
-const APP_SCHEMA_VERSION = 7;
+const APP_SCHEMA_VERSION = 8; // Incremented for API integration
+
+// API Configuration (API_BASE_URL defined in api.js)
+const API_SERVER_URL = "http://localhost:5000";
+let useAPI = false; // Will be set to true if API is available
 
 const IMAGE_BASE_PATH = (() => {
   const attr = document.body?.dataset?.imagesBase || "assets/images/";
@@ -20,6 +24,10 @@ function resolveImageSrc(value) {
   if (!value) return "";
   // If already a full URL (http, https, data, blob), return as is
   if (/^(https?:|data:|blob:)/i.test(value)) return value;
+  // If it's an API upload path, prepend API base URL
+  if (value.startsWith("/uploads")) {
+    return `${API_SERVER_URL}${value}`;
+  }
   // If starts with / or ./ or ../, return as is (absolute or relative path)
   if (value.startsWith("/") || value.startsWith("./") || value.startsWith("../")) return value;
   // If already contains a path separator and starts with assets/, return as is
@@ -210,6 +218,7 @@ let authMode = "signin";
 let pendingSignup = null;
 let heroIndex = -1;
 let heroTimerId = null;
+let verificationTimerId = null;
 let managedUsers = loadFromStorage(STORAGE_KEY_MANAGED_USERS, [
   {
     id: "user-001",
@@ -505,6 +514,43 @@ if (!events || !Array.isArray(events) || events.length === 0) {
   saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
   saveToStorage(STORAGE_KEY_SCHEMA, APP_SCHEMA_VERSION);
 }
+
+// Update event dates to be relative to today if they are in the past
+function updateEventDatesToCurrent() {
+  if (!events || !Array.isArray(events) || events.length === 0) {
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to start of day
+  let updated = false;
+  const daysOffset = [5, 10, 3, 1, 7, 12, 8, 14, 18, 20, 22, 16, 6, 11, 9, 13, 4, 15]; // Days offset for events
+  let offsetIndex = 0;
+
+  events.forEach((event) => {
+    if (!event.date) return;
+
+    const eventDate = new Date(event.date);
+    eventDate.setHours(0, 0, 0, 0);
+
+    // If event date is in the past, update it to a future date
+    if (eventDate < today) {
+      const daysToAdd = daysOffset[offsetIndex % daysOffset.length];
+      const newDate = new Date(today);
+      newDate.setDate(newDate.getDate() + daysToAdd);
+      event.date = newDate.toISOString().slice(0, 10);
+      updated = true;
+      offsetIndex++;
+    }
+  });
+
+  if (updated) {
+    saveToStorage(STORAGE_KEY_EVENTS, events);
+  }
+}
+
+// Update event dates on load
+updateEventDatesToCurrent();
 
 // ----- View Switching (Public + Admin) -----
 
@@ -1056,6 +1102,7 @@ function openEventDetail(eventData) {
     section.classList.toggle("active", section.id === "detail-info");
   });
 
+  layer.style.display = "flex";
   layer.classList.add("open");
 }
 
@@ -1063,6 +1110,7 @@ function closeEventDetail() {
   const layer = document.getElementById("event-detail-layer");
   if (layer) {
     layer.classList.remove("open");
+    layer.style.display = "none";
   }
 }
 
@@ -1252,12 +1300,18 @@ function openRegistrationForm(eventId) {
   // Reset to information step
   showRegistrationStep('information');
   
-  if (layer) layer.classList.add("open");
+  if (layer) {
+    layer.style.display = "flex";
+    layer.classList.add("open");
+  }
 }
 
 function closeRegistrationForm() {
   const layer = document.getElementById("registration-form-layer");
-  if (layer) layer.classList.remove("open");
+  if (layer) {
+    layer.classList.remove("open");
+    layer.style.display = "none";
+  }
   const form = document.getElementById("registration-form");
   if (form) form.reset();
   registrationParticipants = [];
@@ -1268,7 +1322,7 @@ function closeRegistrationForm() {
 // Flag to prevent accidental submission from Next button
 let isSubmittingRegistration = false;
 
-function submitRegistration(eventId, participantsData) {
+async function submitRegistration(eventId, participantsData) {
   console.log('[Eventify] submitRegistration called - this should ONLY happen from Confirm button');
   
   if (isSubmittingRegistration) {
@@ -1278,22 +1332,46 @@ function submitRegistration(eventId, participantsData) {
   
   isSubmittingRegistration = true;
   
-  const list = registrations[eventId] || [];
-  
-  participantsData.forEach((participant) => {
-    list.push({
-      userId: currentUser.email,
-      fullName: participant.fullName,
-      phone: participant.phone,
-      email: participant.email,
-      birthdate: participant.birthdate,
-      ticketType: participant.ticketType,
-      registeredAt: new Date().toISOString(),
+  // Try API registration if available
+  if (useAPI && window.EventifyAPI && window.EventifyAPI.Auth.isLoggedIn()) {
+    try {
+      const participants = participantsData.map(p => ({
+        name: p.fullName,
+        email: p.email,
+        phone: p.phone,
+        birthdate: p.birthdate
+      }));
+      
+      await window.EventifyAPI.Registrations.register(eventId, participants);
+      console.log('[Eventify] API registration successful');
+      
+      // Reload events from API to get updated counts
+      await loadEventsFromAPI();
+    } catch (error) {
+      console.error('[Eventify] API registration failed:', error);
+      alert(error.message || 'Registration failed. Please try again.');
+      isSubmittingRegistration = false;
+      return;
+    }
+  } else {
+    // Fallback to localStorage
+    const list = registrations[eventId] || [];
+    
+    participantsData.forEach((participant) => {
+      list.push({
+        userId: currentUser.email,
+        fullName: participant.fullName,
+        phone: participant.phone,
+        email: participant.email,
+        birthdate: participant.birthdate,
+        ticketType: participant.ticketType,
+        registeredAt: new Date().toISOString(),
+      });
     });
-  });
 
-  registrations[eventId] = list;
-  saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
+    registrations[eventId] = list;
+    saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
+  }
 
   // Don't close form here - it's already showing completed step
   // The form will be closed when user clicks "Close" button
@@ -2031,9 +2109,9 @@ function resetEventForm() {
   document.getElementById("event-id").value = "";
 }
 
-function handleEventFormSubmit(e) {
+async function handleEventFormSubmit(e) {
   e.preventDefault();
-  const id = document.getElementById("event-id").value || generateId();
+  const id = document.getElementById("event-id").value;
   const title = document.getElementById("event-title").value.trim();
   const city = document.getElementById("event-city").value;
   const category = document.getElementById("event-category").value;
@@ -2054,9 +2132,7 @@ function handleEventFormSubmit(e) {
     return;
   }
 
-  const existingIndex = events.findIndex((ev) => ev.id === id);
   const eventPayload = {
-    id,
     title,
     city,
     category,
@@ -2068,11 +2144,48 @@ function handleEventFormSubmit(e) {
     imageUrl: imageUrl || "",
   };
 
+  // Try API if available
+  if (useAPI && window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
+    try {
+      if (id) {
+        // Update existing event
+        await window.EventifyAPI.Events.update(id, eventPayload);
+        console.log('[Eventify] Event updated via API');
+      } else {
+        // Create new event
+        await window.EventifyAPI.Events.create(eventPayload);
+        console.log('[Eventify] Event created via API');
+      }
+      
+      // Reload events from API
+      await loadEventsFromAPI();
+      
+      resetEventForm();
+      renderEventList();
+      renderEventCalendar();
+      renderAdminEventList();
+      renderStatistics();
+      renderPlaceEvents();
+      renderHomeFeaturedList();
+      return;
+    } catch (error) {
+      console.error('[Eventify] API event save failed:', error);
+      alert(error.message || 'Failed to save event. Please try again.');
+      return;
+    }
+  }
+
+  // Fallback to localStorage
+  const localId = id || generateId();
+  eventPayload.id = localId;
+  
+  const existingIndex = events.findIndex((ev) => ev.id === localId);
+
   if (existingIndex >= 0) {
     events[existingIndex] = eventPayload;
   } else {
     events.push(eventPayload);
-    registrations[id] = [];
+    registrations[localId] = [];
   }
 
   saveToStorage(STORAGE_KEY_EVENTS, events);
@@ -2086,8 +2199,33 @@ function handleEventFormSubmit(e) {
   renderPlaceEvents();
 }
 
-function deleteEvent(id) {
+async function deleteEvent(id) {
   if (!confirm("Are you sure you want to delete this event?")) return;
+  
+  // Try API if available
+  if (useAPI && window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
+    try {
+      await window.EventifyAPI.Events.delete(id);
+      console.log('[Eventify] Event deleted via API');
+      
+      // Reload events from API
+      await loadEventsFromAPI();
+      
+      renderEventList();
+      renderEventCalendar();
+      renderAdminEventList();
+      renderStatistics();
+      renderPlaceEvents();
+      renderHomeFeaturedList();
+      return;
+    } catch (error) {
+      console.error('[Eventify] API event delete failed:', error);
+      alert(error.message || 'Failed to delete event. Please try again.');
+      return;
+    }
+  }
+
+  // Fallback to localStorage
   const index = events.findIndex((ev) => ev.id === id);
   if (index >= 0) {
     events.splice(index, 1);
@@ -2564,8 +2702,64 @@ function setupCalendarToolbar() {
 function setupAdminForm() {
   const form = document.getElementById("event-form");
   const resetBtn = document.getElementById("reset-event-form");
-  form.addEventListener("submit", handleEventFormSubmit);
-  resetBtn.addEventListener("click", resetEventForm);
+  const imageFileInput = document.getElementById("event-image-file");
+  
+  if (form) {
+    form.addEventListener("submit", handleEventFormSubmit);
+  }
+  if (resetBtn) {
+    resetBtn.addEventListener("click", resetEventForm);
+  }
+  
+  // Image upload handler
+  if (imageFileInput) {
+    imageFileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const statusEl = document.getElementById("image-upload-status");
+      const previewEl = document.getElementById("image-preview");
+      const previewImg = document.getElementById("image-preview-img");
+      const hiddenInput = document.getElementById("event-image");
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        if (statusEl) statusEl.innerHTML = '<span style="color: #ef4444;">File too large. Max 5MB allowed.</span>';
+        return;
+      }
+      
+      // Show preview
+      if (previewEl && previewImg) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImg.src = e.target.result;
+          previewEl.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      // Upload to server if API is available
+      if (useAPI && window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
+        if (statusEl) statusEl.innerHTML = '<span style="color: #3b82f6;">⏳ Uploading...</span>';
+        
+        try {
+          const response = await window.EventifyAPI.Admin.uploadEventImage(file);
+          if (response.success && response.data) {
+            if (hiddenInput) hiddenInput.value = response.data.url;
+            if (statusEl) statusEl.innerHTML = '<span style="color: #22c55e;">✅ Image uploaded successfully!</span>';
+            console.log('[Eventify] Image uploaded:', response.data.url);
+          }
+        } catch (error) {
+          console.error('[Eventify] Image upload failed:', error);
+          if (statusEl) statusEl.innerHTML = '<span style="color: #ef4444;">❌ Upload failed: ' + error.message + '</span>';
+        }
+      } else {
+        // Fallback: use local filename
+        if (hiddenInput) hiddenInput.value = file.name;
+        if (statusEl) statusEl.innerHTML = '<span style="color: #f59e0b;">⚠️ Using local filename (API not connected)</span>';
+      }
+    });
+  }
 }
 
 function setupManagedUsersForm() {
@@ -2717,6 +2911,7 @@ function openAuthLayer(mode) {
   const layer = document.getElementById("auth-layer");
   if (!layer) return;
   setAuthMode(mode || "signin");
+  layer.style.display = "flex";
   layer.classList.add("open");
   updateUserLoginUI();
 }
@@ -2725,6 +2920,7 @@ function closeAuthLayer() {
   const layer = document.getElementById("auth-layer");
   if (layer) {
     layer.classList.remove("open");
+    layer.style.display = "none";
   }
 }
 
@@ -2757,6 +2953,29 @@ function setupAdminAuth() {
         return;
       }
 
+      // Try API login if available
+      if (useAPI && window.EventifyAPI) {
+        (async () => {
+          try {
+            const response = await window.EventifyAPI.Admin.login(email, password);
+            if (response.success) {
+              console.log("Admin API login successful");
+              setAdminAuthenticated(true);
+              showView("view-admin-dashboard");
+              await loadEventsFromAPI();
+              renderAdminEventList();
+              renderStatistics();
+              renderAdminUserList();
+            }
+          } catch (error) {
+            console.log("API admin login failed:", error);
+            alert(error.message || "Invalid credentials. Please try again.");
+          }
+        })();
+        return;
+      }
+
+      // Fallback to demo credentials
       if (email === "admin@eventify.trnc" && password === "admin123") {
         console.log("Admin credentials valid, logging in...");
         setAdminAuthenticated(true);
@@ -2776,6 +2995,10 @@ function setupAdminAuth() {
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
+      // Clear admin API token
+      if (useAPI && window.EventifyAPI) {
+        window.EventifyAPI.Admin.logout();
+      }
       setAdminAuthenticated(false);
       showView("view-events");
     });
@@ -2804,6 +3027,9 @@ function updateUserLoginUI() {
   const headerSignupBtn = document.getElementById("nav-signup");
 
   if (!statusEl || !logoutBtn || !loginBtn) return;
+
+  // Update demo verification banner visibility/content
+  updateVerificationBanner();
 
   if (currentUser && currentUser.email) {
     const displayName = currentUser.fullName || currentUser.email;
@@ -2852,6 +3078,77 @@ function updateUserLoginUI() {
   }
 }
 
+function updateVerificationBanner() {
+  const banner = document.getElementById("auth-verification-banner");
+  const emailEl = document.getElementById("auth-verification-email");
+  const codeEl = document.getElementById("auth-verification-code");
+
+  if (!banner || !emailEl || !codeEl) return;
+
+  if (
+    authMode === "signup" &&
+    pendingSignup &&
+    pendingSignup.email &&
+    pendingSignup.code
+  ) {
+    emailEl.textContent = pendingSignup.email;
+    codeEl.textContent = pendingSignup.code;
+    banner.style.display = "flex";
+  } else {
+    banner.style.display = "none";
+    emailEl.textContent = "";
+    codeEl.textContent = "";
+  }
+}
+
+function updateVerificationTimerUI() {
+  const timerEl = document.getElementById("signup-code-timer");
+  const resendBtn = document.getElementById("signup-code-resend");
+
+  if (!timerEl || !resendBtn) return;
+
+  if (!pendingSignup || !pendingSignup.codeExpiresAt) {
+    timerEl.textContent = "";
+    resendBtn.disabled = false;
+    return;
+  }
+
+  const now = Date.now();
+  const remainingMs = pendingSignup.codeExpiresAt - now;
+
+  if (remainingMs <= 0) {
+    timerEl.textContent = "Code expired. You can request a new one.";
+    resendBtn.disabled = false;
+    if (verificationTimerId) {
+      window.clearInterval(verificationTimerId);
+      verificationTimerId = null;
+    }
+    return;
+  }
+
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+
+  timerEl.textContent = `Code expires in ${minutes}:${seconds}`;
+  resendBtn.disabled = true;
+}
+
+function startVerificationTimer() {
+  if (!pendingSignup) return;
+
+  const TWO_MINUTES_MS = 2 * 60 * 1000;
+  pendingSignup.codeExpiresAt = Date.now() + TWO_MINUTES_MS;
+
+  if (verificationTimerId) {
+    window.clearInterval(verificationTimerId);
+    verificationTimerId = null;
+  }
+
+  updateVerificationTimerUI();
+  verificationTimerId = window.setInterval(updateVerificationTimerUI, 1000);
+}
+
 function setCurrentUser(user) {
   currentUser = user || null;
   saveToStorage(STORAGE_KEY_USER, currentUser);
@@ -2897,6 +3194,31 @@ function setupUserAuth() {
           return;
         }
 
+        // Try API login first if available
+        if (useAPI && window.EventifyAPI) {
+          (async () => {
+            try {
+              const response = await window.EventifyAPI.Auth.login(idValue, passValue);
+              if (response.success && response.data) {
+                const user = {
+                  fullName: response.data.name,
+                  email: response.data.email,
+                  city: response.data.city
+                };
+                setCurrentUser(user);
+                closeAuthLayer();
+                renderEventList();
+                renderMyRegistrations();
+                renderNotifications();
+              }
+            } catch (error) {
+              alert(error.message || "Incorrect email or password. Please check your details.");
+            }
+          })();
+          return;
+        }
+
+        // Fallback to localStorage
         if (!stored || stored.password !== passValue || stored.email !== idValue) {
           alert("Incorrect email or password. Please check your details.");
           return;
@@ -2922,6 +3244,44 @@ function setupUserAuth() {
 
       // second step: verify code
       if (pendingSignup && codeVal) {
+        if (!pendingSignup.codeExpiresAt || Date.now() > pendingSignup.codeExpiresAt) {
+          alert("Your verification code has expired. Please request a new code.");
+          return;
+        }
+
+        // Try API verification if available
+        if (useAPI && window.EventifyAPI && pendingSignup.useAPI) {
+          (async () => {
+            try {
+              const response = await window.EventifyAPI.Auth.verifyEmail(pendingSignup.email, codeVal);
+              if (response.success && response.data) {
+                const newUser = {
+                  fullName: response.data.name,
+                  email: response.data.email,
+                  city: response.data.city
+                };
+                setCurrentUser(newUser);
+                pendingSignup = null;
+                if (verificationTimerId) {
+                  window.clearInterval(verificationTimerId);
+                  verificationTimerId = null;
+                }
+                updateVerificationBanner();
+                if (signupCodeGroup) signupCodeGroup.style.display = "none";
+                if (signupCodeInput) signupCodeInput.value = "";
+                closeAuthLayer();
+                renderEventList();
+                renderMyRegistrations();
+                renderNotifications();
+              }
+            } catch (error) {
+              alert(error.message || "Verification code is incorrect. Please check the code and try again.");
+            }
+          })();
+          return;
+        }
+
+        // Fallback to localStorage verification
         if (codeVal !== pendingSignup.code) {
           alert("Verification code is incorrect. Please check the code and try again.");
           return;
@@ -2938,6 +3298,11 @@ function setupUserAuth() {
         saveToStorage(STORAGE_KEY_AUTH_USER, newUser);
         setCurrentUser(newUser);
         pendingSignup = null;
+        if (verificationTimerId) {
+          window.clearInterval(verificationTimerId);
+          verificationTimerId = null;
+        }
+        updateVerificationBanner();
         if (signupCodeGroup) signupCodeGroup.style.display = "none";
         if (signupCodeInput) signupCodeInput.value = "";
         closeAuthLayer();
@@ -2981,6 +3346,43 @@ function setupUserAuth() {
         return;
       }
 
+      // Try API registration if available
+      if (useAPI && window.EventifyAPI) {
+        (async () => {
+          try {
+            const response = await window.EventifyAPI.Auth.register({
+              name: fullNameVal,
+              email: emailVal,
+              phone: '0000000000', // Placeholder - will be updated in profile
+              birthdate: '1990-01-01', // Placeholder - will be updated in profile
+              city: countryVal,
+              password: passVal
+            });
+            
+            if (response.success) {
+              pendingSignup = {
+                fullName: fullNameVal,
+                email: emailVal,
+                password: passVal,
+                country: countryVal,
+                marketing,
+                useAPI: true // Flag to use API for verification
+              };
+
+              if (signupCodeGroup) signupCodeGroup.style.display = "block";
+              if (signupCodeInput) signupCodeInput.value = "";
+              alert(`Verification code sent to ${emailVal}. Please check your email.`);
+              updateUserLoginUI();
+              startVerificationTimer();
+            }
+          } catch (error) {
+            alert(error.message || "Registration failed. Please try again.");
+          }
+        })();
+        return;
+      }
+
+      // Fallback to localStorage
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       pendingSignup = {
         fullName: fullNameVal,
@@ -2995,11 +3397,16 @@ function setupUserAuth() {
       if (signupCodeInput) signupCodeInput.value = "";
       alert(`Verification code sent to ${emailVal} (demo code: ${verificationCode})`);
       updateUserLoginUI();
+      startVerificationTimer();
     });
   }
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
+      // Clear API tokens if using API
+      if (useAPI && window.EventifyAPI) {
+        window.EventifyAPI.Auth.logout();
+      }
       setCurrentUser(null);
       renderEventList();
       renderMyRegistrations();
@@ -3039,6 +3446,7 @@ function setupAuthLayer() {
   const passwordToggles = layer.querySelectorAll(".ef-password-toggle");
   const forgotLink = layer.querySelector("#forgot-password-link");
   const privacyLinks = layer.querySelectorAll("[data-open-privacy]");
+  const resendBtn = layer.querySelector("#signup-code-resend");
 
   if (closeBtn) {
     closeBtn.addEventListener("click", () => closeAuthLayer());
@@ -3083,11 +3491,37 @@ function setupAuthLayer() {
     });
   }
 
+  if (resendBtn) {
+    resendBtn.addEventListener("click", async () => {
+      if (!pendingSignup || !pendingSignup.email) return;
+
+      // Try API resend if using API
+      if (useAPI && window.EventifyAPI && pendingSignup.useAPI) {
+        try {
+          await window.EventifyAPI.Auth.resendCode(pendingSignup.email);
+          alert(`New verification code sent to ${pendingSignup.email}. Please check your email.`);
+          startVerificationTimer();
+        } catch (error) {
+          alert(error.message || "Failed to resend code. Please try again.");
+        }
+        return;
+      }
+
+      // Fallback to local demo
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      pendingSignup.code = newCode;
+      alert(`New verification code sent to ${pendingSignup.email} (demo code: ${newCode})`);
+      updateVerificationBanner();
+      startVerificationTimer();
+    });
+  }
+
   privacyLinks.forEach((el) => {
     el.addEventListener("click", (e) => {
       e.preventDefault();
       const privacyLayer = document.getElementById("privacy-layer");
       if (!privacyLayer) return;
+      privacyLayer.style.display = "flex";
       privacyLayer.classList.add("open");
     });
   });
@@ -3113,12 +3547,14 @@ function setupPrivacyLayer() {
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
       layer.classList.remove("open");
+      layer.style.display = "none";
     });
   }
 
   layer.addEventListener("click", (e) => {
     if (e.target === layer) {
       layer.classList.remove("open");
+      layer.style.display = "none";
     }
   });
 }
@@ -3295,7 +3731,7 @@ function renderRegistrationSummary(eventId, participantsData) {
         <p><strong>Name:</strong> ${participant.fullName}</p>
         <p><strong>Email:</strong> ${participant.email}</p>
         <p><strong>Phone:</strong> ${participant.phone}</p>
-        <p><strong>Birthdate:</strong> ${new Date(participant.birthdate).toLocaleDateString()}</p>
+        <p><strong>Birthdate:</strong> ${new Date(participant.birthdate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
     </div>`;
   });
@@ -3553,17 +3989,102 @@ function setupHero() {
   }
 }
 
+// Check API availability
+async function checkAPIConnection() {
+  try {
+    const response = await fetch(`${API_SERVER_URL}/api/health`);
+    const data = await response.json();
+    if (data.status === 'OK') {
+      useAPI = true;
+      console.log('[Eventify] ✅ Connected to Backend API');
+      return true;
+    }
+  } catch (error) {
+    console.warn('[Eventify] ⚠️ Backend API not available, using local mode');
+  }
+  useAPI = false;
+  return false;
+}
+
+// Load events from API
+async function loadEventsFromAPI() {
+  if (!useAPI || !window.EventifyAPI) return false;
+  
+  try {
+    const response = await window.EventifyAPI.Events.getAll({ upcoming: true });
+    if (response.success && response.data) {
+      events = response.data.map(ev => ({
+        id: ev._id,
+        title: ev.title,
+        city: ev.city,
+        category: ev.category,
+        date: ev.date ? ev.date.split('T')[0] : '',
+        time: ev.time,
+        location: ev.location,
+        capacity: ev.capacity,
+        description: ev.description,
+        imageUrl: ev.imageUrl,
+        registeredCount: ev.registeredCount || 0,
+        availableSpots: ev.availableSpots || ev.capacity
+      }));
+      console.log(`[Eventify] Loaded ${events.length} events from API`);
+      return true;
+    }
+  } catch (error) {
+    console.error('[Eventify] Failed to load events from API:', error);
+  }
+  return false;
+}
+
+// Close all overlay layers
+function closeAllLayers() {
+  const layers = document.querySelectorAll('.ef-detail-layer, .ef-auth-layer, .ef-privacy-layer');
+  layers.forEach(layer => {
+    layer.classList.remove('open');
+    layer.style.display = 'none';
+  });
+  document.body.style.overflow = '';
+}
+
 // Initialize the application
 let appInitialized = false;
-function initApp() {
+async function initApp() {
   if (appInitialized) {
     console.log('[Eventify] App already initialized, skipping...');
     return;
   }
   
   console.log('[Eventify] ========================================');
-  console.log('[Eventify] Initializing App - version 20250127.4');
+  console.log('[Eventify] Initializing App - version 20250118.API');
   console.log('[Eventify] ========================================');
+  
+  // Close any stuck layers on startup
+  closeAllLayers();
+  
+  // Check API connection
+  await checkAPIConnection();
+  
+  // If API is available, load events from API
+  if (useAPI) {
+    await loadEventsFromAPI();
+  }
+  
+  // Check if user is logged in via API
+  if (useAPI && window.EventifyAPI && window.EventifyAPI.Auth.isLoggedIn()) {
+    try {
+      const response = await window.EventifyAPI.Auth.getMe();
+      if (response.success && response.data) {
+        currentUser = {
+          name: response.data.name,
+          email: response.data.email,
+          city: response.data.city
+        };
+        updateUserUI();
+      }
+    } catch (error) {
+      console.warn('[Eventify] Failed to get user from API:', error);
+    }
+  }
   
   setupNavigation();
   setupMobileNav();
@@ -3596,6 +4117,7 @@ function initApp() {
   
   appInitialized = true;
   console.log('[Eventify] App initialization complete');
+  console.log(`[Eventify] Mode: ${useAPI ? 'API Connected' : 'Local Storage'}`);
 }
 
 // Make initApp globally accessible
