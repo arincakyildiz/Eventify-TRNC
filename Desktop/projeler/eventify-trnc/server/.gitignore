@@ -33,3 +33,5 @@ coverage/
 dist/
 build/
 
+# Uploads (user-generated content)
+uploads/
