@@ -6,6 +6,16 @@ const Registration = require('../models/Registration');
 // @access  Public
 exports.getEvents = async (req, res, next) => {
   try {
+    // Check MongoDB connection
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection not available. Please check MongoDB connection.',
+        error: 'MongoDB connection state: ' + ['disconnected', 'connected', 'connecting', 'disconnecting'][mongoose.connection.readyState]
+      });
+    }
+
     const { city, category, date, search, upcoming } = req.query;
 
     // Build query

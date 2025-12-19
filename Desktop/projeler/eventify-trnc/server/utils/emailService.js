@@ -3,40 +3,31 @@ const nodemailer = require('nodemailer');
 // Create transporter - configure based on your email service
 // For development, you can use Gmail, SendGrid, Mailgun, etc.
 const createTransporter = () => {
-  // Development: Use Gmail or console logging
-  if (process.env.NODE_ENV === 'development' && !process.env.EMAIL_HOST) {
-    // Console transporter for development (doesn't send actual emails)
-    return {
-      sendMail: async (options) => {
-        console.log('\n========== EMAIL (Development Mode) ==========');
-        console.log('To:', options.to);
-        console.log('Subject:', options.subject);
-        console.log('Body:', options.html || options.text);
-        console.log('==============================================\n');
-        return { messageId: 'dev-mode-' + Date.now() };
-      }
-    };
-  }
-
-  // Production: Use real email service
+  // Use real email service if EMAIL_SERVICE is set (production or development with email configured)
   if (process.env.EMAIL_SERVICE === 'gmail') {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     });
   }
 
   // SMTP configuration (works with most email providers)
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: process.env.EMAIL_PORT || 587,
     secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
+    },
+    tls: {
+      rejectUnauthorized: false
     }
   });
 };
