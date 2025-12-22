@@ -2674,7 +2674,63 @@ function renderEventRegistrationsList(container, registrationsList, eventTitle) 
   });
 }
 
-function getAllRegisteredUsers() {
+async function getAllRegisteredUsers() {
+  // Try to get users from API first
+  if (window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
+    try {
+      const response = await window.EventifyAPI.Admin.getAllUsers();
+      if (response.success && response.data) {
+        // Convert API users to frontend format
+        const apiUsers = response.data.map(user => ({
+          id: user._id || user.id,
+          name: user.name || user.email,
+          email: user.email,
+          city: user.city || "Unknown",
+          role: "citizen",
+          phone: user.phone || '',
+          birthdate: user.birthdate || '',
+          emailVerified: user.emailVerified || false,
+          source: "api",
+          createdAt: user.createdAt || user.registeredAt
+        }));
+        
+        // Also get local users for fallback
+        const localUsers = getAllRegisteredUsersLocal();
+        
+        // Merge API and local users, avoiding duplicates by email
+        const allUsers = [];
+        const emailMap = new Map();
+        
+        // First add API users (they are the source of truth)
+        apiUsers.forEach(user => {
+          if (!emailMap.has(user.email.toLowerCase())) {
+            emailMap.set(user.email.toLowerCase(), user);
+            allUsers.push(user);
+          }
+        });
+        
+        // Then add local users that don't exist in API
+        localUsers.forEach(user => {
+          const emailLower = user.email.toLowerCase();
+          if (!emailMap.has(emailLower)) {
+            emailMap.set(emailLower, user);
+            allUsers.push(user);
+          }
+        });
+        
+        return allUsers;
+      }
+    } catch (error) {
+      console.error('[Eventify] Failed to load users from API:', error);
+      // Fallback to local users
+    }
+  }
+  
+  // Fallback to local users only
+  return getAllRegisteredUsersLocal();
+}
+
+function getAllRegisteredUsersLocal() {
   // Get managed users
   const managed = Array.isArray(managedUsers) ? [...managedUsers] : [];
   
@@ -2689,8 +2745,8 @@ function getAllRegisteredUsers() {
     Object.values(registrations).forEach((regList) => {
       if (Array.isArray(regList)) {
         regList.forEach((reg) => {
-          if (reg.email && !registeredEmails.has(reg.email)) {
-            registeredEmails.add(reg.email);
+          if (reg.email && !registeredEmails.has(reg.email.toLowerCase())) {
+            registeredEmails.add(reg.email.toLowerCase());
             usersFromRegistrations.push({
               id: `reg-${reg.email}`,
               name: reg.fullName || reg.email,
@@ -2707,7 +2763,7 @@ function getAllRegisteredUsers() {
   
   // Add auth user if exists and not already in managed users
   if (authUser && authUser.email) {
-    const existsInManaged = managed.some(u => u.email === authUser.email);
+    const existsInManaged = managed.some(u => u.email && u.email.toLowerCase() === authUser.email.toLowerCase());
     if (!existsInManaged) {
       managed.push({
         id: `auth-${authUser.email}`,
@@ -2726,16 +2782,16 @@ function getAllRegisteredUsers() {
   
   // First add managed users
   managed.forEach(user => {
-    if (!emailMap.has(user.email)) {
-      emailMap.set(user.email, user);
+    if (user.email && !emailMap.has(user.email.toLowerCase())) {
+      emailMap.set(user.email.toLowerCase(), user);
       allUsers.push(user);
     }
   });
   
   // Then add users from registrations
   usersFromRegistrations.forEach(user => {
-    if (!emailMap.has(user.email)) {
-      emailMap.set(user.email, user);
+    if (user.email && !emailMap.has(user.email.toLowerCase())) {
+      emailMap.set(user.email.toLowerCase(), user);
       allUsers.push(user);
     }
   });
@@ -2743,12 +2799,12 @@ function getAllRegisteredUsers() {
   return allUsers;
 }
 
-function renderAdminUserList() {
+async function renderAdminUserList() {
   const container = document.getElementById("admin-user-list");
   const countBadge = document.getElementById("user-count-badge");
   if (!container) return;
 
-  const allUsers = getAllRegisteredUsers();
+  const allUsers = await getAllRegisteredUsers();
   
   // Update user count badge
   if (countBadge) {
@@ -2835,12 +2891,12 @@ function resetUserForm() {
   document.getElementById("managed-user-id").value = "";
 }
 
-function deleteManagedUser(userId) {
-  if (!confirm("Delete this user?")) return;
-  managedUsers = managedUsers.filter((u) => u.id !== userId);
-  saveToStorage(STORAGE_KEY_MANAGED_USERS, managedUsers);
-  renderAdminUserList();
-}
+function   async deleteManagedUser(userId) {
+    if (!confirm("Delete this user?")) return;
+    managedUsers = managedUsers.filter((u) => u.id !== userId);
+    saveToStorage(STORAGE_KEY_MANAGED_USERS, managedUsers);
+    await renderAdminUserList();
+  }
 
 // ----- Statistics -----
 
@@ -3186,7 +3242,7 @@ function setupManagedUsersForm() {
   const resetBtn = document.getElementById("managed-user-reset");
   if (!form) return;
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const idField = document.getElementById("managed-user-id");
     const nameField = document.getElementById("managed-user-name");
@@ -3235,7 +3291,7 @@ function setupManagedUsersForm() {
 
     saveToStorage(STORAGE_KEY_MANAGED_USERS, managedUsers);
     resetUserForm();
-    renderAdminUserList();
+    await renderAdminUserList();
     
     // Show success message
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -3387,7 +3443,7 @@ function setupAdminAuth() {
               await loadEventsFromAPI();
               renderAdminEventList();
               renderStatistics();
-              renderAdminUserList();
+              await renderAdminUserList();
               apiLoginSuccess = true;
               return;
             }
@@ -3404,7 +3460,7 @@ function setupAdminAuth() {
           showView("view-admin-dashboard");
           renderAdminEventList();
           renderStatistics();
-          renderAdminUserList();
+          await renderAdminUserList();
           console.log("Admin login successful");
         } else if (!apiLoginSuccess) {
           console.log("Invalid credentials");
@@ -3748,8 +3804,13 @@ function setupUserAuth() {
                 if (signupCodeInput) signupCodeInput.value = "";
                 closeAuthLayer();
                 renderEventList();
-                renderMyRegistrations();
+                await renderMyRegistrations();
                 renderNotifications();
+                
+                // Update admin user list if admin is viewing it
+                if (adminAuthenticated) {
+                  await renderAdminUserList();
+                }
               }
             } catch (error) {
               alert(error.message || "Verification code is incorrect. Please check the code and try again.");
@@ -4650,7 +4711,7 @@ async function initApp() {
   renderNotifications();
   renderHomeFeaturedList();
   renderAdminEventList();
-  renderAdminUserList();
+  await renderAdminUserList();
   renderStatistics();
   renderPlaceEvents();
   await renderMyRegistrations();
