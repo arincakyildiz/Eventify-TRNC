@@ -602,15 +602,18 @@ function showView(viewId) {
 
   // Ensure content is rendered when switching to specific views
   // Use a small delay to ensure DOM is ready
-  setTimeout(() => {
+  setTimeout(async () => {
     if (viewId === "view-registrations") {
-      renderMyRegistrations();
+      await renderMyRegistrations();
     } else if (viewId === "view-events") {
       renderEventList();
     } else if (viewId === "view-calendar") {
       renderEventCalendar();
     } else if (viewId === "view-home") {
       renderHomeFeaturedList();
+    } else if (viewId === "view-admin-dashboard" || viewId === "view-admin-users") {
+      // Refresh user list when admin views are opened
+      await renderAdminUserList();
     }
   }, 50);
 }
