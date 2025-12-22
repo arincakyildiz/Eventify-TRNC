@@ -666,13 +666,19 @@ function setupUserProfileMenu() {
 
   // Setup notification button FIRST (before pill/menu check)
   if (headerNotifBtn) {
-    headerNotifBtn.addEventListener("click", (e) => {
+    headerNotifBtn.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       const isOpen = document.body.classList.toggle("ef-notifications-open");
-      if (isOpen && pill) {
-        document.body.classList.remove("ef-user-menu-open");
-        pill.setAttribute("aria-expanded", "false");
+      if (isOpen) {
+        // Close user menu if open
+        if (pill) {
+          document.body.classList.remove("ef-user-menu-open");
+          pill.setAttribute("aria-expanded", "false");
+        }
+        // Refresh notifications when menu opens (always refresh to get latest data)
+        await renderNotifications();
       }
     });
   }
