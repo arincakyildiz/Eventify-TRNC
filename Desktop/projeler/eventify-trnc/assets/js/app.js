@@ -4370,9 +4370,10 @@ async function checkAPIConnection() {
       return true;
     }
   } catch (error) {
-    console.warn('[Eventify] ⚠️ Backend API not available, using local mode');
+    console.warn('[Eventify] ⚠️ Backend API health check failed, but will still try to use API when needed');
+    // Don't set useAPI to false immediately - let loadEventsFromAPI try
   }
-  useAPI = false;
+  // Don't set useAPI = false here - API might still work for specific operations
   return false;
 }
 
