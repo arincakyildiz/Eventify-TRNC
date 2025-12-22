@@ -679,15 +679,19 @@ function setupUserProfileMenu() {
 
   if (!pill || !menu) return;
 
-  pill.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = document.body.classList.toggle("ef-user-menu-open");
-    if (isOpen) {
-      document.body.classList.remove("ef-notifications-open");
-    }
-    pill.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  });
+  // Only attach listener if not already attached
+  if (!pill.hasAttribute('data-listener-attached')) {
+    pill.setAttribute('data-listener-attached', 'true');
+    pill.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = document.body.classList.toggle("ef-user-menu-open");
+      if (isOpen) {
+        document.body.classList.remove("ef-notifications-open");
+      }
+      pill.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+  }
 
   document.addEventListener("click", (e) => {
     // Don't close if clicking inside user menu or user pill
@@ -3570,6 +3574,10 @@ function updateUserLoginUI() {
           .join("")
           .slice(0, 2)
           .toUpperCase() || "U";
+      
+      // Store if listener was attached before changing innerHTML
+      const hadListener = headerUserPill.hasAttribute('data-listener-attached');
+      
       headerUserPill.innerHTML = `
         <span class="ef-user-pill-avatar">${initials}</span>
         <span class="ef-user-pill-name">${displayName}</span>
@@ -3577,9 +3585,22 @@ function updateUserLoginUI() {
       headerUserPill.style.display = "inline-flex";
       headerUserPill.style.pointerEvents = "auto";
       headerUserPill.style.cursor = "pointer";
-      // Ensure pill is clickable
       headerUserPill.setAttribute("tabindex", "0");
       headerUserPill.setAttribute("role", "button");
+      
+      // Re-attach click listener after innerHTML change (innerHTML removes listeners)
+      if (hadListener || currentUser) {
+        headerUserPill.setAttribute('data-listener-attached', 'true');
+        headerUserPill.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const isOpen = document.body.classList.toggle("ef-user-menu-open");
+          if (isOpen) {
+            document.body.classList.remove("ef-notifications-open");
+          }
+          headerUserPill.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        });
+      }
     }
   } else if (authMode === "signup" && pendingSignup && pendingSignup.email) {
     statusEl.textContent = `Verification code sent to ${pendingSignup.email}. Enter the code to complete sign up.`;
