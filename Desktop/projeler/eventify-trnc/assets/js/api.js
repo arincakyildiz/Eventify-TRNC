@@ -272,7 +272,9 @@ const AdminAPI = {
   async uploadEventImage(file) {
     const url = `${API_BASE_URL}/upload/event-image`;
     console.log('[Eventify] Uploading image to:', url);
+    console.log('[Eventify] API_BASE_URL:', API_BASE_URL);
     console.log('[Eventify] Admin token exists:', !!adminToken);
+    console.log('[Eventify] File name:', file.name, 'Size:', file.size, 'Type:', file.type);
     
     const formData = new FormData();
     formData.append('image', file);
@@ -291,18 +293,34 @@ const AdminAPI = {
       });
 
       console.log('[Eventify] Upload response status:', response.status);
+      console.log('[Eventify] Upload response headers:', Object.fromEntries(response.headers.entries()));
       
-      const data = await response.json();
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.error('[Eventify] Non-JSON response:', text);
+        throw new Error(`Server returned non-JSON response: ${response.status} ${response.statusText}`);
+      }
+      
       console.log('[Eventify] Upload response data:', data);
 
       if (!response.ok) {
         console.error('[Eventify] Upload failed:', response.status, data);
-        throw new Error(data.message || `Upload failed: ${response.status}`);
+        throw new Error(data.message || `Upload failed with status ${response.status}`);
       }
 
       return data;
     } catch (error) {
-      console.error('[Eventify] Upload error:', error);
+      console.error('[Eventify] Upload Error:', error);
+      // Provide more helpful error message
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to server. Please check if the backend API is running and accessible.');
+      }
       throw error;
     }
   }
