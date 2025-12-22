@@ -1,0 +1,13 @@
+{
+  "name": "eventify-trnc",
+  "version": "1.0.0",
+  "description": "Eventify TRNC - Community Event Management Platform",
+  "scripts": {
+    "dev": "cd server && npm run dev",
+    "start": "cd server && npm start"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
