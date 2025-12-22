@@ -4511,8 +4511,9 @@ async function initApp() {
   // This ensures admin-created events are visible
   await loadEventsFromAPI();
   
-  // Check if user is logged in via API
-  if (useAPI && window.EventifyAPI && window.EventifyAPI.Auth.isLoggedIn()) {
+  // Check if user is logged in via API (always check if token exists, not just if useAPI is true)
+  // This ensures users who registered are automatically logged in even if API health check failed
+  if (window.EventifyAPI && window.EventifyAPI.Auth.isLoggedIn()) {
     try {
       const response = await window.EventifyAPI.Auth.getMe();
       if (response.success && response.data) {
@@ -4523,37 +4524,17 @@ async function initApp() {
         };
         setCurrentUser(currentUser);
         updateUserUI();
+        // If we successfully got user from API, mark useAPI as true
+        useAPI = true;
       }
     } catch (error) {
       console.warn('[Eventify] Failed to get user from API:', error);
       // If token is invalid, clear it
       if (window.EventifyAPI) {
         window.EventifyAPI.Auth.logout();
-      }
-    }
-  } else {
-    // Check if remember device is enabled and user should be auto-logged in
-    const rememberDevice = loadFromStorage('eventify_remember_device', false);
-    if (rememberDevice && useAPI && window.EventifyAPI) {
-      // Token already exists, try to get user info
-      try {
-        const response = await window.EventifyAPI.Auth.getMe();
-        if (response.success && response.data) {
-          currentUser = {
-            fullName: response.data.name,
-            email: response.data.email,
-            city: response.data.city
-          };
-          setCurrentUser(currentUser);
-          updateUserUI();
-        }
-      } catch (error) {
-        // Token expired or invalid, clear remember device
+        // Also clear remember device if token is invalid
         localStorage.removeItem('eventify_remember_device');
         localStorage.removeItem('eventify_remembered_email');
-        if (window.EventifyAPI) {
-          window.EventifyAPI.Auth.logout();
-        }
       }
     }
   }
