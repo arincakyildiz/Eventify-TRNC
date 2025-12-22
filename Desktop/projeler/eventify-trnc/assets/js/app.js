@@ -2895,10 +2895,37 @@ function resetUserForm() {
 }
 
 async function deleteManagedUser(userId) {
-  if (!confirm("Delete this user?")) return;
-  managedUsers = managedUsers.filter((u) => u.id !== userId);
-  saveToStorage(STORAGE_KEY_MANAGED_USERS, managedUsers);
-  await renderAdminUserList();
+  if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+  
+  // Try API deletion if available and user is from API
+  if (window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
+    // Check if userId looks like MongoDB ID (24 hex characters) or if it's an API user
+    const isAPIUser = userId.length === 24 || /^[0-9a-fA-F]{24}$/.test(userId);
+    
+    if (isAPIUser) {
+      try {
+        await window.EventifyAPI.Admin.deleteUser(userId);
+        console.log('[Eventify] User deleted via API');
+        // Reload user list from API
+        await renderAdminUserList();
+        return;
+      } catch (error) {
+        console.error('[Eventify] API user delete failed:', error);
+        alert(error.message || 'Failed to delete user. Please try again.');
+        return;
+      }
+    }
+  }
+  
+  // Fallback: delete from local managed users
+  const userIndex = managedUsers.findIndex((u) => u.id === userId);
+  if (userIndex >= 0) {
+    managedUsers.splice(userIndex, 1);
+    saveToStorage(STORAGE_KEY_MANAGED_USERS, managedUsers);
+    await renderAdminUserList();
+  } else {
+    alert('User not found in local storage. If this is an API user, please ensure you are logged in as admin.');
+  }
 }
 
 // ----- Statistics -----

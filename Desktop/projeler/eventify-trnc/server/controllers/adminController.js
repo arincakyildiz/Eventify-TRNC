@@ -1,4 +1,5 @@
 const Admin = require('../models/Admin');
+const User = require('../models/User');
 
 // @desc    Admin login
 // @route   POST /api/admin/login
@@ -58,6 +59,50 @@ exports.getMe = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: admin
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get all users
+// @route   GET /api/admin/users
+// @access  Private (Admin)
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({}).select('-password -verificationCode -verificationCodeExpires').sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete user
+// @route   DELETE /api/admin/users/:userId
+// @access  Private (Admin)
+exports.deleteUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'User deleted successfully'
     });
   } catch (error) {
     next(error);

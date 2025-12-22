@@ -275,6 +275,18 @@ const AdminAPI = {
     return fetchAdminAPI(`/admin/events/${eventId}/registrations`);
   },
 
+  // Get all users
+  async getAllUsers() {
+    return fetchAdminAPI('/admin/users');
+  },
+
+  // Delete user
+  async deleteUser(userId) {
+    return fetchAdminAPI(`/admin/users/${userId}`, {
+      method: 'DELETE'
+    });
+  },
+
   // Upload event image
   async uploadEventImage(file) {
     const url = `${API_BASE_URL}/upload/event-image`;
