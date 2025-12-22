@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const fs = require('fs');
 const connectDB = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -84,7 +85,15 @@ app.use(express.json()); // Body parser
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// In Vercel, use /tmp for uploads or configure external storage
+const uploadsPath = process.env.VERCEL 
+  ? path.join('/tmp', 'uploads') // Vercel uses /tmp for temporary files
+  : path.join(__dirname, 'uploads');
+  
+// Only serve static files if directory exists (or in non-Vercel environments)
+if (!process.env.VERCEL || fs.existsSync(uploadsPath)) {
+  app.use('/uploads', express.static(uploadsPath));
+}
 
 // Health Check
 app.get('/api/health', (req, res) => {
