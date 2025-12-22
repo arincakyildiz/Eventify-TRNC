@@ -12,7 +12,18 @@ const STORAGE_KEY_SCHEMA = "eventify_schema_version";
 const APP_SCHEMA_VERSION = 8; // Incremented for API integration
 
 // API Configuration (API_BASE_URL defined in api.js)
-const API_SERVER_URL = "http://localhost:5000";
+const getAPIServerURL = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      // Production: use same origin or relative
+      return window.location.origin;
+    }
+  }
+  return "http://localhost:5000";
+};
+
+const API_SERVER_URL = getAPIServerURL();
 let useAPI = false; // Will be set to true if API is available
 
 const IMAGE_BASE_PATH = (() => {
@@ -26,7 +37,11 @@ function resolveImageSrc(value) {
   if (/^(https?:|data:|blob:)/i.test(value)) return value;
   // If it's an API upload path, prepend API base URL
   if (value.startsWith("/uploads")) {
-    return `${API_SERVER_URL}${value}`;
+    // In production, use relative URL; in development, use full URL
+    const isProduction = typeof window !== 'undefined' && 
+      window.location.hostname !== 'localhost' && 
+      window.location.hostname !== '127.0.0.1';
+    return isProduction ? value : `${API_SERVER_URL}${value}`;
   }
   // If starts with / or ./ or ../, return as is (absolute or relative path)
   if (value.startsWith("/") || value.startsWith("./") || value.startsWith("../")) return value;
@@ -3907,15 +3922,36 @@ function showRegistrationStep(step) {
 }
 
 function updateRegistrationProgress(step) {
-  const progressSteps = document.querySelectorAll('.ef-progress-step');
+  const layer = document.getElementById("registration-form-layer");
+  if (!layer) {
+    console.warn('[Eventify] registration-form-layer not found for progress update');
+    return;
+  }
+  
+  const progressSteps = layer.querySelectorAll('.ef-progress-step');
+  console.log('[Eventify] Updating registration progress, step:', step, 'found steps:', progressSteps.length);
+  
+  if (progressSteps.length === 0) {
+    console.warn('[Eventify] No progress steps found in registration form');
+    return;
+  }
+  
   progressSteps.forEach((stepEl, index) => {
     stepEl.classList.remove('active', 'completed');
     
-    const stepNumber = parseInt(stepEl.querySelector('.ef-progress-step-number').textContent);
+    const stepNumberEl = stepEl.querySelector('.ef-progress-step-number');
+    if (!stepNumberEl) {
+      console.warn('[Eventify] Step number element not found');
+      return;
+    }
+    
+    const stepNumber = parseInt(stepNumberEl.textContent.trim());
     let currentStepNumber = 2; // Information is step 2
     
     if (step === 'summary') currentStepNumber = 3;
     else if (step === 'completed') currentStepNumber = 4;
+    
+    console.log('[Eventify] Step number:', stepNumber, 'Current step:', currentStepNumber);
     
     if (stepNumber < currentStepNumber) {
       stepEl.classList.add('completed');

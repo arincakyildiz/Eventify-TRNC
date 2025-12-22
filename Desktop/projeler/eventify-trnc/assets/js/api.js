@@ -1,7 +1,32 @@
 // Eventify TRNC - API Service
 // Handles all communication with the backend
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// Determine API URL based on environment
+const getAPIBaseURL = () => {
+  if (typeof window !== 'undefined' && document.body) {
+    // Check if API URL is specified in HTML data attribute
+    const dataApiUrl = document.body.getAttribute('data-api-base-url');
+    if (dataApiUrl && dataApiUrl.trim()) {
+      return dataApiUrl.trim();
+    }
+    
+    const hostname = window.location.hostname;
+    
+    // If running on Vercel or production domain
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      // Use relative URL for same-origin, or your production API URL
+      // For Vercel, if backend is on a different service, use that URL
+      // Example: return 'https://your-backend-api.vercel.app/api';
+      // Or use relative path if same domain
+      return '/api'; // Relative URL if backend is on same domain
+    }
+  }
+  
+  // Development: use localhost
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getAPIBaseURL();
 
 // Token management
 let authToken = localStorage.getItem('eventify_token');
@@ -375,8 +400,13 @@ window.EventifyAPI = {
   checkHealth: checkAPIHealth,
   getImageUrl: (imagePath) => {
     if (!imagePath) return '';
-    if (imagePath.startsWith('http') || imagePath.startsWith('/uploads')) {
-      return imagePath.startsWith('/uploads') ? `http://localhost:5000${imagePath}` : imagePath;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('/uploads')) {
+      // Use relative URL in production, full URL in development
+      const isProduction = typeof window !== 'undefined' && 
+        window.location.hostname !== 'localhost' && 
+        window.location.hostname !== '127.0.0.1';
+      return isProduction ? imagePath : `http://localhost:5000${imagePath}`;
     }
     // Legacy images from assets folder
     return `assets/images/${imagePath}`;
