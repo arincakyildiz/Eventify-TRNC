@@ -785,14 +785,14 @@ function isUserRegistered(ev) {
   });
 }
 
-function renderMyRegistrations() {
+async function renderMyRegistrations() {
   const container = document.getElementById("my-registrations-list");
   if (!container) {
     console.warn('[Eventify] renderMyRegistrations: container not found');
     return;
   }
 
-  // Ensure events and registrations are loaded
+  // Ensure events are loaded
   if (!events || !Array.isArray(events)) {
     console.warn('[Eventify] renderMyRegistrations: events not loaded yet');
     container.innerHTML = '<div class="ef-empty-state">Loading...</div>';
@@ -803,6 +803,41 @@ function renderMyRegistrations() {
     container.innerHTML =
       '<div class="ef-empty-state">Please sign in with your email address to see your registrations.</div>';
     return;
+  }
+
+  // Try to load registrations from API if available
+  if (window.EventifyAPI && window.EventifyAPI.Auth.isLoggedIn()) {
+    try {
+      const response = await window.EventifyAPI.Registrations.getMyRegistrations();
+      if (response.success && response.data) {
+        // Update local registrations with API data
+        response.data.forEach(reg => {
+          const eventId = reg.event?._id || reg.event;
+          if (eventId) {
+            if (!registrations[eventId]) {
+              registrations[eventId] = [];
+            }
+            // Add registration if not already exists
+            const exists = registrations[eventId].some(r => r.userId === currentUser.email);
+            if (!exists) {
+              registrations[eventId].push({
+                userId: currentUser.email,
+                fullName: reg.participants?.[0]?.name || currentUser.fullName,
+                email: reg.participants?.[0]?.email || currentUser.email,
+                phone: reg.participants?.[0]?.phone || '',
+                birthdate: reg.participants?.[0]?.birthdate || '',
+                registeredAt: reg.registeredAt || new Date().toISOString()
+              });
+            }
+          }
+        });
+        // Save to localStorage
+        saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
+      }
+    } catch (error) {
+      console.error('[Eventify] Failed to load registrations from API:', error);
+      // Continue with local storage data
+    }
   }
 
   const registeredEvents = events.filter((ev) => {
@@ -881,11 +916,9 @@ function renderMyRegistrations() {
       `;
 
       const cancelBtn = card.querySelector("[data-cancel-id]");
-      cancelBtn.addEventListener("click", () => {
-        if (confirm("Are you sure you want to cancel your registration for this event?")) {
-          toggleRegistration(ev.id);
-          renderMyRegistrations();
-        }
+      cancelBtn.addEventListener("click", async () => {
+        await toggleRegistration(ev.id);
+        await renderMyRegistrations();
       });
 
       container.appendChild(card);
@@ -1421,7 +1454,7 @@ async function submitRegistration(eventId, participantsData) {
   console.log('[Eventify] submitRegistration completed');
 }
 
-function toggleRegistration(eventId) {
+async function toggleRegistration(eventId) {
   if (!currentUser || !currentUser.email) {
     alert("Please sign in or create an account before registering for an event.");
     openAuthLayer();
@@ -1433,19 +1466,46 @@ function toggleRegistration(eventId) {
 
   if (existingIndex >= 0) {
     // Cancel registration
-    if (confirm("Are you sure you want to cancel your registration for this event?")) {
+    if (!confirm("Are you sure you want to cancel your registration for this event?")) {
+      return;
+    }
+    
+    // Try API first if available
+    if (window.EventifyAPI && window.EventifyAPI.Auth.isLoggedIn()) {
+      try {
+        // First, try to get the registration ID from API
+        const myRegsResponse = await window.EventifyAPI.Registrations.getMyRegistrations();
+        if (myRegsResponse.success && myRegsResponse.data) {
+          const registration = myRegsResponse.data.find(reg => reg.event === eventId || reg.event?._id === eventId);
+          if (registration && registration._id) {
+            await window.EventifyAPI.Registrations.cancel(registration._id);
+            console.log('[Eventify] Registration cancelled via API');
+            
+            // Reload events from API to get updated counts
+            await loadEventsFromAPI();
+          }
+        }
+      } catch (error) {
+        console.error('[Eventify] API cancel registration failed:', error);
+        // Fallback to localStorage
+        list.splice(existingIndex, 1);
+        registrations[eventId] = list;
+        saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
+      }
+    } else {
+      // Fallback to localStorage
       list.splice(existingIndex, 1);
       registrations[eventId] = list;
       saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
-
-      renderEventList();
-      renderEventCalendar();
-      renderNotifications();
-      renderStatistics();
-      renderAdminEventList();
-      renderMyRegistrations();
-      renderHomeFeaturedList();
     }
+
+    renderEventList();
+    renderEventCalendar();
+    renderNotifications();
+    renderStatistics();
+    renderAdminEventList();
+    renderMyRegistrations();
+    renderHomeFeaturedList();
   } else {
     // Open registration form
     openRegistrationForm(eventId);
@@ -4525,6 +4585,7 @@ async function initApp() {
   renderAdminUserList();
   renderStatistics();
   renderPlaceEvents();
+  await renderMyRegistrations();
   showView(DEFAULT_VIEW);
   
   appInitialized = true;
