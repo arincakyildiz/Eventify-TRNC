@@ -4,7 +4,11 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 
 // Create uploads directory if it doesn't exist
-const uploadDir = path.join(__dirname, '..', 'uploads', 'events');
+// In Vercel, use /tmp for temporary file storage (serverless functions have read-only filesystem)
+const uploadDir = process.env.VERCEL 
+  ? path.join('/tmp', 'uploads', 'events')
+  : path.join(__dirname, '..', 'uploads', 'events');
+  
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
