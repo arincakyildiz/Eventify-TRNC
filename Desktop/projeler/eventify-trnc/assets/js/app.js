@@ -3126,25 +3126,54 @@ function setupAdminForm() {
         if (statusEl) statusEl.innerHTML = '<span style="color: #3b82f6;">⏳ Uploading...</span>';
         
         try {
+          console.log('[Eventify] Starting image upload...');
+          console.log('[Eventify] Admin logged in:', window.EventifyAPI.Admin.isLoggedIn());
+          console.log('[Eventify] API Base URL:', window.EventifyAPI ? 'Available' : 'Not available');
+          
           const response = await window.EventifyAPI.Admin.uploadEventImage(file);
+          console.log('[Eventify] Upload response received:', response);
+          
           if (response.success && response.data) {
-            if (hiddenInput) hiddenInput.value = response.data.url;
+            // Use full URL if it's a relative path
+            let imageUrl = response.data.url;
+            if (imageUrl.startsWith('/uploads')) {
+              // For Vercel, we might need to prepend the API server URL
+              const apiBase = window.EventifyAPI ? (window.EventifyAPI.API_BASE_URL || '') : '';
+              if (apiBase && !apiBase.includes('localhost')) {
+                // Remove /api from end if present
+                const baseUrl = apiBase.replace(/\/api\/?$/, '');
+                imageUrl = baseUrl + imageUrl;
+              }
+            }
+            
+            if (hiddenInput) hiddenInput.value = imageUrl;
             if (statusEl) statusEl.innerHTML = '<span style="color: #22c55e;">✅ Image uploaded successfully!</span>';
-            console.log('[Eventify] Image uploaded:', response.data.url);
+            console.log('[Eventify] Image uploaded:', imageUrl);
           } else {
             throw new Error(response.message || 'Upload failed');
           }
         } catch (error) {
           console.error('[Eventify] Image upload failed:', error);
+          console.error('[Eventify] Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
+          
           // Show error but don't block - user can still use local filename
           if (statusEl) {
-            statusEl.innerHTML = '<span style="color: #ef4444;">❌ Upload failed: ' + (error.message || 'Server error') + '. Using local filename.</span>';
+            let errorMsg = error.message || 'Server error';
+            if (errorMsg.includes('Cannot connect')) {
+              errorMsg = 'Backend API is not accessible. Please check your API URL configuration.';
+            }
+            statusEl.innerHTML = '<span style="color: #ef4444;">❌ Upload failed: ' + errorMsg + '<br><small>Using local filename as fallback.</small></span>';
           }
           // Fallback: use local filename
           if (hiddenInput) hiddenInput.value = file.name;
         }
       } else {
         // Admin not logged in - use local filename
+        console.warn('[Eventify] Admin not logged in, cannot upload image');
         if (hiddenInput) hiddenInput.value = file.name;
         if (statusEl) statusEl.innerHTML = '<span style="color: #f59e0b;">⚠️ Admin login required for image upload. Using local filename.</span>';
       }
