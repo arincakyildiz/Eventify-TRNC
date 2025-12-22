@@ -782,7 +782,11 @@ function isEventFull(ev) {
 }
 
 function isUserRegistered(ev) {
-  const regs = registrations[ev.id] || [];
+  // Support both local events (with id) and API events (with _id)
+  const eventId = ev._id || ev.id;
+  if (!eventId) return false;
+  
+  const regs = registrations[eventId] || [];
   if (!currentUser || !currentUser.email) return false;
   const userEmail = currentUser.email.toLowerCase().trim();
   // Check both userId and email fields for compatibility
@@ -1489,7 +1493,7 @@ async function submitRegistration(eventId, participantsData) {
 
   renderEventList();
   renderEventCalendar();
-  renderNotifications();
+  await renderNotifications();
   renderStatistics();
   renderAdminEventList();
   await renderMyRegistrations();
@@ -1557,10 +1561,48 @@ async function toggleRegistration(eventId) {
   }
 }
 
-function renderNotifications() {
+async function renderNotifications() {
   const container = document.getElementById("upcoming-notifications");
   const headerMenu = document.getElementById("header-notifications-menu");
   const today = new Date(todayISO());
+
+  // Load registrations from API if user is logged in
+  if (window.EventifyAPI && window.EventifyAPI.Auth.isLoggedIn() && currentUser && currentUser.email) {
+    try {
+      const response = await window.EventifyAPI.Registrations.getMyRegistrations();
+      if (response.success && response.data) {
+        // Update local registrations with API data
+        response.data.forEach(reg => {
+          const eventId = reg.event?._id || reg.event;
+          if (eventId) {
+            if (!registrations[eventId]) {
+              registrations[eventId] = [];
+            }
+            // Add registration if not already exists
+            const exists = registrations[eventId].some(r => 
+              (r.userId || '').toLowerCase() === currentUser.email.toLowerCase() ||
+              (r.email || '').toLowerCase() === currentUser.email.toLowerCase()
+            );
+            if (!exists) {
+              registrations[eventId].push({
+                userId: currentUser.email,
+                fullName: reg.participants?.[0]?.name || currentUser.fullName,
+                email: reg.participants?.[0]?.email || currentUser.email,
+                phone: reg.participants?.[0]?.phone || '',
+                birthdate: reg.participants?.[0]?.birthdate || '',
+                registeredAt: reg.registeredAt || new Date().toISOString()
+              });
+            }
+          }
+        });
+        // Save to localStorage
+        saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
+      }
+    } catch (error) {
+      console.error('[Eventify] Failed to load registrations from API for notifications:', error);
+      // Continue with local storage data
+    }
+  }
 
   const upcoming = events
     .filter((ev) => isUserRegistered(ev))
