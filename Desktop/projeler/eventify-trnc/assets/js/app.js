@@ -4378,7 +4378,11 @@ async function checkAPIConnection() {
 
 // Load events from API
 async function loadEventsFromAPI() {
-  if (!useAPI || !window.EventifyAPI) return false;
+  // Try to load even if useAPI is false - API might be available now
+  if (!window.EventifyAPI) {
+    console.log('[Eventify] EventifyAPI not available');
+    return false;
+  }
   
   try {
     const response = await window.EventifyAPI.Events.getAll({ upcoming: true });
@@ -4393,11 +4397,19 @@ async function loadEventsFromAPI() {
         location: ev.location,
         capacity: ev.capacity,
         description: ev.description,
-        imageUrl: ev.imageUrl,
+        imageUrl: ev.imageUrl || ev.posterUrl || '',
         registeredCount: ev.registeredCount || 0,
         availableSpots: ev.availableSpots || ev.capacity
       }));
+      
+      // Save to localStorage as backup
+      saveToStorage(STORAGE_KEY_EVENTS, events);
+      
       console.log(`[Eventify] Loaded ${events.length} events from API`);
+      
+      // Update useAPI flag if successful
+      useAPI = true;
+      
       return true;
     }
   } catch (error) {
@@ -4434,10 +4446,9 @@ async function initApp() {
   // Check API connection
   await checkAPIConnection();
   
-  // If API is available, load events from API
-  if (useAPI) {
-    await loadEventsFromAPI();
-  }
+  // Always try to load events from API (even if useAPI is false, API might be available)
+  // This ensures admin-created events are visible
+  await loadEventsFromAPI();
   
   // Check if user is logged in via API
   if (useAPI && window.EventifyAPI && window.EventifyAPI.Auth.isLoggedIn()) {
