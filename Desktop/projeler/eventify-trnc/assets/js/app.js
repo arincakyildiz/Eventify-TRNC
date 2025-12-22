@@ -1686,8 +1686,8 @@ async function renderNotifications() {
     `;
     container.appendChild(card);
 
-    // Also show a compact version in the header menu for the first few items
-    if (headerMenu && index < 3) {
+    // Show ALL items in header menu (not just first 3)
+    if (headerMenu) {
       const item = document.createElement("div");
       item.className = "ef-notification-menu-item";
       item.innerHTML = `
@@ -1697,6 +1697,8 @@ async function renderNotifications() {
       headerMenu.appendChild(item);
     }
   });
+  
+  console.log('[Eventify] Rendered', upcoming.length, 'notifications in menu');
 }
 
 
