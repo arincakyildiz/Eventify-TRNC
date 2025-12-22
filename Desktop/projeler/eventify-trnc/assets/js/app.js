@@ -734,8 +734,10 @@ function setupUserProfileMenu() {
     } else if (action === "logout") {
       setCurrentUser(null);
       renderEventList();
-      renderMyRegistrations();
-      renderNotifications();
+      (async () => {
+        await renderMyRegistrations();
+        await renderNotifications();
+      })();
     }
 
     document.body.classList.remove("ef-user-menu-open");
@@ -1550,10 +1552,10 @@ async function toggleRegistration(eventId) {
 
     renderEventList();
     renderEventCalendar();
-    renderNotifications();
+    await renderNotifications();
     renderStatistics();
     renderAdminEventList();
-    renderMyRegistrations();
+    await renderMyRegistrations();
     renderHomeFeaturedList();
   } else {
     // Open registration form
@@ -4044,8 +4046,10 @@ function setupUserAuth() {
       localStorage.removeItem('eventify_remember_device');
       localStorage.removeItem('eventify_remembered_email');
       renderEventList();
-      renderMyRegistrations();
-      renderNotifications();
+      (async () => {
+        await renderMyRegistrations();
+        await renderNotifications();
+      })();
       closeAuthLayer();
     });
   }
