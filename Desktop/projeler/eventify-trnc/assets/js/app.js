@@ -2891,12 +2891,12 @@ function resetUserForm() {
   document.getElementById("managed-user-id").value = "";
 }
 
-function   async deleteManagedUser(userId) {
-    if (!confirm("Delete this user?")) return;
-    managedUsers = managedUsers.filter((u) => u.id !== userId);
-    saveToStorage(STORAGE_KEY_MANAGED_USERS, managedUsers);
-    await renderAdminUserList();
-  }
+async function deleteManagedUser(userId) {
+  if (!confirm("Delete this user?")) return;
+  managedUsers = managedUsers.filter((u) => u.id !== userId);
+  saveToStorage(STORAGE_KEY_MANAGED_USERS, managedUsers);
+  await renderAdminUserList();
+}
 
 // ----- Statistics -----
 
