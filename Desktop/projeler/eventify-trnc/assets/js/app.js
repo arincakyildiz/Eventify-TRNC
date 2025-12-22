@@ -3024,8 +3024,8 @@ function setupAdminForm() {
         reader.readAsDataURL(file);
       }
       
-      // Upload to server if API is available
-      if (useAPI && window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
+      // Try to upload to server if Admin is logged in
+      if (window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
         if (statusEl) statusEl.innerHTML = '<span style="color: #3b82f6;">⏳ Uploading...</span>';
         
         try {
@@ -3034,15 +3034,22 @@ function setupAdminForm() {
             if (hiddenInput) hiddenInput.value = response.data.url;
             if (statusEl) statusEl.innerHTML = '<span style="color: #22c55e;">✅ Image uploaded successfully!</span>';
             console.log('[Eventify] Image uploaded:', response.data.url);
+          } else {
+            throw new Error(response.message || 'Upload failed');
           }
         } catch (error) {
           console.error('[Eventify] Image upload failed:', error);
-          if (statusEl) statusEl.innerHTML = '<span style="color: #ef4444;">❌ Upload failed: ' + error.message + '</span>';
+          // Show error but don't block - user can still use local filename
+          if (statusEl) {
+            statusEl.innerHTML = '<span style="color: #ef4444;">❌ Upload failed: ' + (error.message || 'Server error') + '. Using local filename.</span>';
+          }
+          // Fallback: use local filename
+          if (hiddenInput) hiddenInput.value = file.name;
         }
       } else {
-        // Fallback: use local filename
+        // Admin not logged in - use local filename
         if (hiddenInput) hiddenInput.value = file.name;
-        if (statusEl) statusEl.innerHTML = '<span style="color: #f59e0b;">⚠️ Using local filename (API not connected)</span>';
+        if (statusEl) statusEl.innerHTML = '<span style="color: #f59e0b;">⚠️ Admin login required for image upload. Using local filename.</span>';
       }
     });
   }

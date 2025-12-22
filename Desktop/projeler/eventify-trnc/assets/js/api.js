@@ -4,20 +4,26 @@
 // Determine API URL based on environment
 const getAPIBaseURL = () => {
   if (typeof window !== 'undefined' && document.body) {
-    // Check if API URL is specified in HTML data attribute
+    // Priority 1: Check if API URL is specified in HTML data attribute
     const dataApiUrl = document.body.getAttribute('data-api-base-url');
     if (dataApiUrl && dataApiUrl.trim()) {
-      return dataApiUrl.trim();
+      const url = dataApiUrl.trim();
+      // Ensure it ends with /api if it's a base URL
+      return url.endsWith('/api') ? url : (url + (url.endsWith('/') ? 'api' : '/api'));
+    }
+    
+    // Priority 2: Check for meta tag (for build-time injection)
+    const metaApiUrl = document.querySelector('meta[name="api-base-url"]');
+    if (metaApiUrl && metaApiUrl.content && metaApiUrl.content.trim()) {
+      const url = metaApiUrl.content.trim();
+      return url.endsWith('/api') ? url : (url + (url.endsWith('/') ? 'api' : '/api'));
     }
     
     const hostname = window.location.hostname;
     
-    // If running on Vercel or production domain
+    // Priority 3: Production domain - use relative URL (assumes backend on same domain)
+    // For separate backend, use data-api-base-url attribute instead
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      // Use relative URL for same-origin, or your production API URL
-      // For Vercel, if backend is on a different service, use that URL
-      // Example: return 'https://your-backend-api.vercel.app/api';
-      // Or use relative path if same domain
       return '/api'; // Relative URL if backend is on same domain
     }
   }
@@ -27,6 +33,7 @@ const getAPIBaseURL = () => {
 };
 
 const API_BASE_URL = getAPIBaseURL();
+console.log('[Eventify] API Base URL:', API_BASE_URL);
 
 // Token management
 let authToken = localStorage.getItem('eventify_token');
