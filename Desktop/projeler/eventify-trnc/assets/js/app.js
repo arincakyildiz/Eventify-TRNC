@@ -3742,7 +3742,10 @@ function setCurrentUser(user) {
   saveToStorage(STORAGE_KEY_USER, currentUser);
   updateUserLoginUI();
   // Re-render registrations when user changes
-  renderMyRegistrations();
+  (async () => {
+    await renderMyRegistrations();
+    await renderNotifications();
+  })();
   
   // Update remembered email if user is set and remember device is enabled
   if (user && user.email) {
@@ -3827,8 +3830,10 @@ function setupUserAuth() {
                 
                 closeAuthLayer();
                 renderEventList();
-                renderMyRegistrations();
-                renderNotifications();
+                (async () => {
+                  await renderMyRegistrations();
+                  await renderNotifications();
+                })();
               }
             } catch (error) {
               alert(error.message || "Incorrect email or password. Please check your details.");
@@ -3856,8 +3861,10 @@ function setupUserAuth() {
         
         closeAuthLayer();
         renderEventList();
-        renderMyRegistrations();
-        renderNotifications();
+        (async () => {
+          await renderMyRegistrations();
+          await renderNotifications();
+        })();
         return;
       }
 
@@ -3900,8 +3907,10 @@ function setupUserAuth() {
                 if (signupCodeInput) signupCodeInput.value = "";
                 closeAuthLayer();
                 renderEventList();
-                await renderMyRegistrations();
-                renderNotifications();
+                (async () => {
+                  await renderMyRegistrations();
+                  await renderNotifications();
+                })();
                 
                 // Update admin user list if admin is viewing it
                 if (adminAuthenticated) {
@@ -3941,8 +3950,10 @@ function setupUserAuth() {
         if (signupCodeInput) signupCodeInput.value = "";
         closeAuthLayer();
         renderEventList();
-        renderMyRegistrations();
-        renderNotifications();
+        (async () => {
+          await renderMyRegistrations();
+          await renderNotifications();
+        })();
         return;
       }
 
@@ -4806,7 +4817,7 @@ async function initApp() {
   setupHero();
   renderEventList();
   renderEventCalendar();
-  renderNotifications();
+  await renderNotifications();
   renderHomeFeaturedList();
   renderAdminEventList();
   await renderAdminUserList();
