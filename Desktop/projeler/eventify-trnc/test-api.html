@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Eventify TRNC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Vercel API Test Tool</h1>
+    
+    <div class="test-section">
+        <h2>1. API Configuration</h2>
+        <button onclick="checkConfig()">Check Config</button>
+        <div id="config-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Health Check</h2>
+        <button onclick="testHealth()">Test /api/health</button>
+        <div id="health-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Events API</h2>
+        <button onclick="testEvents()">Test /api/events</button>
+        <div id="events-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Admin Login</h2>
+        <button onclick="testAdminLogin()">Test Admin Login</button>
+        <div id="admin-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Image Upload</h2>
+        <input type="file" id="test-image" accept="image/*">
+        <button onclick="testImageUpload()">Test Image Upload</button>
+        <div id="upload-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>6. Full Test Suite</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <div id="all-results" class="result"></div>
+    </div>
+
+    <script>
+        const baseURL = window.location.origin;
+        
+        function showResult(elementId, data, isError = false) {
+            const el = document.getElementById(elementId);
+            el.className = 'result ' + (isError ? 'error' : 'success');
+            el.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        function showInfo(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.className = 'result info';
+            el.textContent = message;
+        }
+        
+        async function checkConfig() {
+            const info = {
+                baseURL: baseURL,
+                apiBaseURL: window.EventifyAPI ? 'Available' : 'Not available',
+                location: window.location.href,
+                hostname: window.location.hostname
+            };
+            showInfo('config-result', JSON.stringify(info, null, 2));
+        }
+        
+        async function testHealth() {
+            try {
+                const response = await fetch(`${baseURL}/api/health`);
+                const data = await response.json();
+                showResult('health-result', {
+                    status: response.status,
+                    data: data
+                });
+            } catch (error) {
+                showResult('health-result', {
+                    error: error.message,
+                    stack: error.stack
+                }, true);
+            }
+        }
+        
+        async function testEvents() {
+            try {
+                const response = await fetch(`${baseURL}/api/events`);
+                const data = await response.json();
+                showResult('events-result', {
+                    status: response.status,
+                    count: data.data ? data.data.length : 0,
+                    data: data
+                });
+            } catch (error) {
+                showResult('events-result', {
+                    error: error.message
+                }, true);
+            }
+        }
+        
+        async function testAdminLogin() {
+            try {
+                const response = await fetch(`${baseURL}/api/admin/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@eventify.trnc',
+                        password: 'admin123'
+                    })
+                });
+                const data = await response.json();
+                showResult('admin-result', {
+                    status: response.status,
+                    data: data
+                });
+            } catch (error) {
+                showResult('admin-result', {
+                    error: error.message
+                }, true);
+            }
+        }
+        
+        async function testImageUpload() {
+            const fileInput = document.getElementById('test-image');
+            if (!fileInput.files[0]) {
+                showInfo('upload-result', 'Please select an image file first');
+                return;
+            }
+            
+            try {
+                // First login as admin
+                const loginResponse = await fetch(`${baseURL}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@eventify.trnc',
+                        password: 'admin123'
+                    })
+                });
+                const loginData = await loginResponse.json();
+                
+                if (!loginData.token) {
+                    showResult('upload-result', {
+                        error: 'Admin login failed',
+                        loginData: loginData
+                    }, true);
+                    return;
+                }
+                
+                // Now upload image
+                const formData = new FormData();
+                formData.append('image', fileInput.files[0]);
+                
+                const uploadResponse = await fetch(`${baseURL}/api/upload/event-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${loginData.token}`
+                    },
+                    body: formData
+                });
+                
+                const uploadData = await uploadResponse.json();
+                showResult('upload-result', {
+                    status: uploadResponse.status,
+                    data: uploadData
+                });
+            } catch (error) {
+                showResult('upload-result', {
+                    error: error.message,
+                    stack: error.stack
+                }, true);
+            }
+        }
+        
+        async function runAllTests() {
+            const results = [];
+            
+            // Test 1: Config
+            results.push('=== Config Check ===');
+            const config = {
+                baseURL: baseURL,
+                apiAvailable: !!window.EventifyAPI
+            };
+            results.push(JSON.stringify(config, null, 2));
+            
+            // Test 2: Health
+            results.push('\n=== Health Check ===');
+            try {
+                const health = await fetch(`${baseURL}/api/health`);
+                const healthData = await health.json();
+                results.push(`Status: ${health.status}`);
+                results.push(JSON.stringify(healthData, null, 2));
+            } catch (err) {
+                results.push(`ERROR: ${err.message}`);
+            }
+            
+            // Test 3: Events
+            results.push('\n=== Events API ===');
+            try {
+                const events = await fetch(`${baseURL}/api/events`);
+                const eventsData = await events.json();
+                results.push(`Status: ${events.status}`);
+                results.push(`Count: ${eventsData.data ? eventsData.data.length : 0}`);
+            } catch (err) {
+                results.push(`ERROR: ${err.message}`);
+            }
+            
+            // Test 4: Admin Login
+            results.push('\n=== Admin Login ===');
+            try {
+                const admin = await fetch(`${baseURL}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@eventify.trnc',
+                        password: 'admin123'
+                    })
+                });
+                const adminData = await admin.json();
+                results.push(`Status: ${admin.status}`);
+                results.push(`Token: ${adminData.token ? 'Received' : 'Not received'}`);
+            } catch (err) {
+                results.push(`ERROR: ${err.message}`);
+            }
+            
+            const el = document.getElementById('all-results');
+            el.className = 'result info';
+            el.textContent = results.join('\n');
+        }
+    </script>
+</body>
+</html>
+
