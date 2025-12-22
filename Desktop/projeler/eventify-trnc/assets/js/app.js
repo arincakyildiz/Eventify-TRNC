@@ -1413,6 +1413,43 @@ async function submitRegistration(eventId, participantsData) {
       
       // Reload events from API to get updated counts
       await loadEventsFromAPI();
+      
+      // Also update local registrations array from API for notifications to work
+      // This ensures isUserRegistered() can find the registration
+      try {
+        const myRegsResponse = await window.EventifyAPI.Registrations.getMyRegistrations();
+        if (myRegsResponse.success && myRegsResponse.data) {
+          // Update local registrations array
+          myRegsResponse.data.forEach(reg => {
+            const eventIdFromReg = reg.event?._id || reg.event;
+            if (eventIdFromReg) {
+              if (!registrations[eventIdFromReg]) {
+                registrations[eventIdFromReg] = [];
+              }
+              // Add registration if not already exists
+              const exists = registrations[eventIdFromReg].some(r => 
+                (r.userId || '').toLowerCase() === currentUser.email.toLowerCase() ||
+                (r.email || '').toLowerCase() === currentUser.email.toLowerCase()
+              );
+              if (!exists) {
+                registrations[eventIdFromReg].push({
+                  userId: currentUser.email,
+                  fullName: reg.participants?.[0]?.name || currentUser.fullName,
+                  email: reg.participants?.[0]?.email || currentUser.email,
+                  phone: reg.participants?.[0]?.phone || '',
+                  birthdate: reg.participants?.[0]?.birthdate || '',
+                  registeredAt: reg.registeredAt || new Date().toISOString()
+                });
+              }
+            }
+          });
+          // Save to localStorage
+          saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
+        }
+      } catch (regError) {
+        console.warn('[Eventify] Failed to load registrations from API after registration:', regError);
+        // Continue anyway - notifications might not show but registration is successful
+      }
     } catch (error) {
       console.error('[Eventify] API registration failed:', error);
       alert(error.message || 'Registration failed. Please try again.');
@@ -1447,7 +1484,7 @@ async function submitRegistration(eventId, participantsData) {
   renderNotifications();
   renderStatistics();
   renderAdminEventList();
-  renderMyRegistrations();
+  await renderMyRegistrations();
   renderHomeFeaturedList();
   
   isSubmittingRegistration = false;
@@ -3422,6 +3459,11 @@ function updateUserLoginUI() {
         <span class="ef-user-pill-name">${displayName}</span>
       `;
       headerUserPill.style.display = "inline-flex";
+      headerUserPill.style.pointerEvents = "auto";
+      headerUserPill.style.cursor = "pointer";
+      // Ensure pill is clickable
+      headerUserPill.setAttribute("tabindex", "0");
+      headerUserPill.setAttribute("role", "button");
     }
   } else if (authMode === "signup" && pendingSignup && pendingSignup.email) {
     statusEl.textContent = `Verification code sent to ${pendingSignup.email}. Enter the code to complete sign up.`;
