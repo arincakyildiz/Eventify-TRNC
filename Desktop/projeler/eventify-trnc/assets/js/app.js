@@ -649,6 +649,7 @@ function setupUserProfileMenu() {
   if (!pill || !menu) return;
 
   pill.addEventListener("click", (e) => {
+    e.preventDefault();
     e.stopPropagation();
     const isOpen = document.body.classList.toggle("ef-user-menu-open");
     if (isOpen) {
@@ -657,14 +658,24 @@ function setupUserProfileMenu() {
     pill.setAttribute("aria-expanded", isOpen ? "true" : "false");
   });
 
-  document.addEventListener("click", () => {
-    if (document.body.classList.contains("ef-user-menu-open")) {
-      document.body.classList.remove("ef-user-menu-open");
-      pill.setAttribute("aria-expanded", "false");
+  document.addEventListener("click", (e) => {
+    // Don't close if clicking inside user menu or user pill
+    const clickedInsideUserMenu = (menu && menu.contains(e.target)) || (pill && pill.contains(e.target));
+    // Don't close if clicking inside notification menu or notification button
+    const clickedInsideNotifMenu = (headerNotifMenu && headerNotifMenu.contains(e.target)) || 
+                                    (headerNotifBtn && headerNotifBtn.contains(e.target));
+    
+    if (!clickedInsideUserMenu) {
+      if (document.body.classList.contains("ef-user-menu-open")) {
+        document.body.classList.remove("ef-user-menu-open");
+        if (pill) pill.setAttribute("aria-expanded", "false");
+      }
     }
 
-    if (document.body.classList.contains("ef-notifications-open")) {
-      document.body.classList.remove("ef-notifications-open");
+    if (!clickedInsideNotifMenu) {
+      if (document.body.classList.contains("ef-notifications-open")) {
+        document.body.classList.remove("ef-notifications-open");
+      }
     }
   });
 
@@ -698,6 +709,7 @@ function setupUserProfileMenu() {
 
   if (headerNotifBtn) {
     headerNotifBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       e.stopPropagation();
       const isOpen = document.body.classList.toggle("ef-notifications-open");
       if (isOpen) {
@@ -785,7 +797,7 @@ function renderMyRegistrations() {
 
   if (registeredEvents.length === 0) {
     container.innerHTML =
-      '<div class="ef-empty-state">You are not registered for any events yet in this demo.</div>';
+      '<div class="ef-empty-state">You are not registered for any events yet.</div>';
     return;
   }
 
@@ -1131,7 +1143,9 @@ function setupDetailPanel() {
 
   const registerBtn = layer.querySelector("[data-detail-register]");
   if (registerBtn) {
-    registerBtn.addEventListener("click", () => {
+    registerBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const eventId = registerBtn.getAttribute("data-event-id");
       if (eventId) {
         toggleRegistration(eventId);
@@ -1147,7 +1161,9 @@ function setupDetailPanel() {
   const tabButtons = layer.querySelectorAll("[data-detail-tab]");
   const sections = layer.querySelectorAll(".ef-detail-section");
   tabButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const target = btn.dataset.detailTab;
       tabButtons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
@@ -1246,7 +1262,9 @@ function createParticipantCard(index, isMain = false) {
   // Remove participant button
   const removeBtn = card.querySelector(`[data-remove-participant="${index}"]`);
   if (removeBtn) {
-    removeBtn.addEventListener("click", () => {
+    removeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       card.remove();
       updateParticipantCount();
     });
@@ -1586,19 +1604,19 @@ function renderPlaceEvents() {
       emptyOverlay.innerHTML = `
         <div class="ef-place-overlay-content">
           <strong>No events linked yet</strong>
-          <span>This venue doesn't have any demo events right now.</span>
+          <span>This venue doesn't have any events right now.</span>
         </div>
       `;
       card.appendChild(emptyOverlay);
       card.classList.add("ef-place-card--no-events");
       highlight.innerHTML = `
-        <div class="ef-place-highlight-title">No demo events yet</div>
+        <div class="ef-place-highlight-title">No events yet</div>
         <div class="ef-place-highlight-body">
           <span>We will announce upcoming programs for this venue soon.</span>
         </div>
       `;
       target.innerHTML =
-        '<div class="ef-place-events-item ef-place-events-meta">No demo events linked to this venue yet.</div>';
+        '<div class="ef-place-events-item ef-place-events-meta">No events linked to this venue yet.</div>';
       return;
     }
 
@@ -2083,6 +2101,84 @@ function renderHomeFeaturedList() {
   });
 }
 
+// ----- Success Notification/Toast -----
+
+function showSuccessNotification(message, duration = 3000) {
+  // Remove existing notification if any
+  const existing = document.getElementById('admin-success-notification');
+  if (existing) {
+    existing.remove();
+  }
+  
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.id = 'admin-success-notification';
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: #ffffff;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    max-width: 400px;
+    animation: slideInRight 0.3s ease-out;
+  `;
+  
+  notification.innerHTML = `
+    <span style="font-size: 1.25rem;">✓</span>
+    <span>${message}</span>
+  `;
+  
+  // Add animation keyframes if not already added
+  if (!document.getElementById('notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOutRight {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(notification);
+  
+  // Auto remove after duration
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease-out';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 300);
+  }, duration);
+}
+
 // ----- Admin View -----
 
 function fillEventForm(ev) {
@@ -2151,10 +2247,12 @@ async function handleEventFormSubmit(e) {
         // Update existing event
         await window.EventifyAPI.Events.update(id, eventPayload);
         console.log('[Eventify] Event updated via API');
+        showSuccessNotification('Event updated successfully!');
       } else {
         // Create new event
         await window.EventifyAPI.Events.create(eventPayload);
         console.log('[Eventify] Event created via API');
+        showSuccessNotification('Event created successfully!');
       }
       
       // Reload events from API
@@ -2191,6 +2289,13 @@ async function handleEventFormSubmit(e) {
   saveToStorage(STORAGE_KEY_EVENTS, events);
   saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
 
+  // Show success message
+  if (existingIndex >= 0) {
+    showSuccessNotification('Event updated successfully!');
+  } else {
+    showSuccessNotification('Event created successfully!');
+  }
+
   resetEventForm();
   renderEventList();
   renderEventCalendar();
@@ -2210,6 +2315,8 @@ async function deleteEvent(id) {
       
       // Reload events from API
       await loadEventsFromAPI();
+      
+      showSuccessNotification('Event deleted successfully!');
       
       renderEventList();
       renderEventCalendar();
@@ -2234,6 +2341,8 @@ async function deleteEvent(id) {
 
   saveToStorage(STORAGE_KEY_EVENTS, events);
   saveToStorage(STORAGE_KEY_REGISTRATIONS, registrations);
+
+  showSuccessNotification('Event deleted successfully!');
 
   renderEventList();
   renderEventCalendar();
@@ -2276,18 +2385,180 @@ function renderAdminEventList() {
           }"></span>
           <span>${regs.length}/${ev.capacity}</span>
         </span>
+        <button class="ef-btn ef-btn-ghost" data-view-registrations="${ev.id}">View Registrations</button>
         <button class="ef-btn ef-btn-ghost" data-edit-id="${ev.id}">Edit</button>
         <button class="ef-btn ef-btn-danger" data-delete-id="${ev.id}">Delete</button>
       </div>
     `;
 
+    const viewRegBtn = item.querySelector("[data-view-registrations]");
     const editBtn = item.querySelector("[data-edit-id]");
     const deleteBtn = item.querySelector("[data-delete-id]");
 
+    if (viewRegBtn) {
+      viewRegBtn.addEventListener("click", () => showEventRegistrations(ev.id, ev.title));
+    }
     editBtn.addEventListener("click", () => fillEventForm(ev));
     deleteBtn.addEventListener("click", () => deleteEvent(ev.id));
 
     container.appendChild(item);
+  });
+}
+
+// Show event registrations in admin panel
+async function showEventRegistrations(eventId, eventTitle) {
+  console.log('[Eventify] showEventRegistrations called:', eventId, eventTitle);
+  
+  // Create or get modal
+  let modal = document.getElementById('admin-registrations-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'admin-registrations-modal';
+    modal.className = 'ef-detail-layer';
+    modal.innerHTML = `
+      <div class="ef-detail-panel" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <button class="ef-detail-close" id="admin-registrations-close">&times;</button>
+        <h2 id="admin-registrations-title" style="margin-top: 0; margin-bottom: 1rem;">Event Registrations</h2>
+        <div id="admin-registrations-content">
+          <div class="ef-empty-state">Loading...</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Close button
+    const closeBtn = modal.querySelector('#admin-registrations-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    }
+    
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+  
+  // Update title
+  const titleEl = document.getElementById('admin-registrations-title');
+  if (titleEl) {
+    titleEl.textContent = `Registrations: ${eventTitle}`;
+  }
+  
+  // Show modal
+  modal.style.display = 'flex';
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  
+  const contentEl = document.getElementById('admin-registrations-content');
+  if (!contentEl) {
+    console.error('[Eventify] Content element not found');
+    return;
+  }
+  
+  contentEl.innerHTML = '<div class="ef-empty-state">Loading...</div>';
+  
+  try {
+    // Try API first
+    if (useAPI && window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
+      console.log('[Eventify] Fetching registrations from API for event:', eventId);
+      const response = await window.EventifyAPI.Admin.getEventRegistrations(eventId);
+      console.log('[Eventify] API response:', response);
+      if (response.success && response.data) {
+        renderEventRegistrationsList(contentEl, response.data, eventTitle);
+        return;
+      }
+    }
+    
+    // Fallback to local data
+    console.log('[Eventify] Using local registrations data');
+    const localRegs = registrations[eventId] || [];
+    console.log('[Eventify] Local registrations:', localRegs);
+    if (localRegs.length === 0) {
+      contentEl.innerHTML = '<div class="ef-empty-state">No registrations yet for this event.</div>';
+    } else {
+      renderEventRegistrationsList(contentEl, localRegs.map(reg => ({
+        _id: reg.id || Math.random().toString(36),
+        user: {
+          name: reg.fullName || 'Unknown',
+          email: reg.email || 'No email',
+          phone: reg.phone || 'No phone',
+          city: reg.city || 'Unknown'
+        },
+        participants: reg.participants || [reg],
+        registeredAt: reg.registeredAt || new Date().toISOString()
+      })), eventTitle);
+    }
+  } catch (error) {
+    console.error('[Eventify] Failed to load registrations:', error);
+    contentEl.innerHTML = `<div class="ef-empty-state">Error loading registrations: ${error.message}</div>`;
+  }
+}
+
+function renderEventRegistrationsList(container, registrationsList, eventTitle) {
+  if (!registrationsList || registrationsList.length === 0) {
+    container.innerHTML = '<div class="ef-empty-state">No registrations yet for this event.</div>';
+    return;
+  }
+  
+  container.innerHTML = `
+    <div style="margin-bottom: 1rem; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;">
+      <strong>Total Registrations:</strong> ${registrationsList.length}
+    </div>
+    <div class="ef-list">
+    </div>
+  `;
+  
+  const listContainer = container.querySelector('.ef-list');
+  if (!listContainer) {
+    console.error('[Eventify] List container not found');
+    return;
+  }
+  
+  registrationsList.forEach((reg, index) => {
+    const user = reg.user || {};
+    const participants = reg.participants || (reg.participant ? [reg.participant] : []);
+    
+    const item = document.createElement('div');
+    item.className = 'ef-list-item';
+    item.style.marginBottom = '1rem';
+    item.style.padding = '1rem';
+    item.style.border = '1px solid #e2e8f0';
+    item.style.borderRadius = '0.5rem';
+    item.style.background = '#ffffff';
+    
+    item.innerHTML = `
+      <div class="ef-list-item-main">
+        <span class="ef-list-item-title">${user.name || user.email || 'Unknown User'}</span>
+        <span class="ef-list-item-meta">
+          ${user.email || 'No email'}${user.phone ? ' · ' + user.phone : ''}${user.city ? ' · ' + user.city : ''}
+        </span>
+        ${participants && participants.length > 0 ? `
+          <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e2e8f0;">
+            <strong style="font-size: 0.875rem; color: #64748b;">Participants (${participants.length}):</strong>
+            <ul style="margin: 0.25rem 0 0 0; padding-left: 1.5rem; font-size: 0.875rem; color: #475569;">
+              ${participants.map(p => {
+                const name = p.fullName || p.name || 'Unknown';
+                const birthYear = p.birthdate ? new Date(p.birthdate).getFullYear() : null;
+                return `<li>${name}${birthYear ? ' (Born: ' + birthYear + ')' : ''}</li>`;
+              }).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #94a3b8;">
+          Registered: ${formatDate(reg.registeredAt || reg.createdAt || new Date().toISOString())}
+        </div>
+      </div>
+    `;
+    
+    listContainer.appendChild(item);
   });
 }
 
@@ -2986,7 +3257,7 @@ function setupAdminAuth() {
         console.log("Admin login successful");
       } else {
         console.log("Invalid credentials");
-        alert("Invalid demo credentials. Please use admin@eventify.trnc / admin123");
+        alert("Invalid credentials. Please check your email and password.");
       }
     });
   } else {
@@ -3081,23 +3352,19 @@ function updateUserLoginUI() {
 function updateVerificationBanner() {
   const banner = document.getElementById("auth-verification-banner");
   const emailEl = document.getElementById("auth-verification-email");
-  const codeEl = document.getElementById("auth-verification-code");
 
-  if (!banner || !emailEl || !codeEl) return;
+  if (!banner || !emailEl) return;
 
   if (
     authMode === "signup" &&
     pendingSignup &&
-    pendingSignup.email &&
-    pendingSignup.code
+    pendingSignup.email
   ) {
     emailEl.textContent = pendingSignup.email;
-    codeEl.textContent = pendingSignup.code;
     banner.style.display = "flex";
   } else {
     banner.style.display = "none";
     emailEl.textContent = "";
-    codeEl.textContent = "";
   }
 }
 
@@ -3155,11 +3422,28 @@ function setCurrentUser(user) {
   updateUserLoginUI();
   // Re-render registrations when user changes
   renderMyRegistrations();
+  
+  // Update remembered email if user is set and remember device is enabled
+  if (user && user.email) {
+    const rememberDevice = loadFromStorage('eventify_remember_device', false);
+    if (rememberDevice) {
+      saveToStorage('eventify_remembered_email', user.email);
+    }
+  }
 }
 
 function setupUserAuth() {
   const form = document.getElementById("auth-login-form");
   const logoutBtn = document.getElementById("auth-logout-btn");
+  
+  // Pre-fill email if remember device was used
+  const rememberedEmail = loadFromStorage('eventify_remembered_email', null);
+  if (rememberedEmail) {
+    const emailInput = document.getElementById("signin-identifier");
+    if (emailInput) {
+      emailInput.value = rememberedEmail;
+    }
+  }
 
   if (form) {
     form.addEventListener("submit", (e) => {
@@ -3194,6 +3478,10 @@ function setupUserAuth() {
           return;
         }
 
+        // Check remember device checkbox
+        const rememberDevice = document.getElementById('remember-device');
+        const shouldRemember = rememberDevice ? rememberDevice.checked : false;
+
         // Try API login first if available
         if (useAPI && window.EventifyAPI) {
           (async () => {
@@ -3206,6 +3494,16 @@ function setupUserAuth() {
                   city: response.data.city
                 };
                 setCurrentUser(user);
+                
+                // Save remember device preference
+                if (shouldRemember) {
+                  saveToStorage('eventify_remember_device', true);
+                  saveToStorage('eventify_remembered_email', idValue);
+                } else {
+                  localStorage.removeItem('eventify_remember_device');
+                  localStorage.removeItem('eventify_remembered_email');
+                }
+                
                 closeAuthLayer();
                 renderEventList();
                 renderMyRegistrations();
@@ -3225,6 +3523,16 @@ function setupUserAuth() {
         }
 
         setCurrentUser(stored);
+        
+        // Save remember device preference
+        if (shouldRemember) {
+          saveToStorage('eventify_remember_device', true);
+          saveToStorage('eventify_remembered_email', idValue);
+        } else {
+          localStorage.removeItem('eventify_remember_device');
+          localStorage.removeItem('eventify_remembered_email');
+        }
+        
         closeAuthLayer();
         renderEventList();
         renderMyRegistrations();
@@ -3395,7 +3703,7 @@ function setupUserAuth() {
 
       if (signupCodeGroup) signupCodeGroup.style.display = "block";
       if (signupCodeInput) signupCodeInput.value = "";
-      alert(`Verification code sent to ${emailVal} (demo code: ${verificationCode})`);
+      alert(`Verification code sent to ${emailVal}. Please check your email.`);
       updateUserLoginUI();
       startVerificationTimer();
     });
@@ -3408,6 +3716,9 @@ function setupUserAuth() {
         window.EventifyAPI.Auth.logout();
       }
       setCurrentUser(null);
+      // Clear remember device on logout
+      localStorage.removeItem('eventify_remember_device');
+      localStorage.removeItem('eventify_remembered_email');
       renderEventList();
       renderMyRegistrations();
       renderNotifications();
@@ -3443,7 +3754,6 @@ function setupAuthLayer() {
   const closeBtn = layer.querySelector("[data-auth-close]");
   const tabButtons = layer.querySelectorAll(".ef-auth-tabs [data-auth-mode]");
   const switchLinks = layer.querySelectorAll("[data-switch-auth]");
-  const passwordToggles = layer.querySelectorAll(".ef-password-toggle");
   const forgotLink = layer.querySelector("#forgot-password-link");
   const privacyLinks = layer.querySelectorAll("[data-open-privacy]");
   const resendBtn = layer.querySelector("#signup-code-resend");
@@ -3453,6 +3763,34 @@ function setupAuthLayer() {
   }
 
   layer.addEventListener("click", (e) => {
+    // Handle password toggle buttons
+    const toggleBtn = e.target.closest(".ef-password-toggle");
+    if (toggleBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      const targetId = toggleBtn.dataset.target;
+      if (!targetId) return;
+
+      const input = document.getElementById(targetId);
+      if (!input) {
+        console.warn('[Eventify] Password toggle target input not found:', targetId);
+        return;
+      }
+
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      
+      // Update button icon
+      toggleBtn.textContent = isHidden ? "🙈" : "👁";
+      
+      // Also update aria-label for accessibility
+      toggleBtn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+      return;
+    }
+
+    // Handle layer background click (close)
     if (e.target === layer) {
       closeAuthLayer();
     }
@@ -3486,7 +3824,7 @@ function setupAuthLayer() {
       }
 
       alert(
-        `Password reset link sent to ${emailVal}.\n\nDemo note: In a real system, you would receive an email with a link to choose a new password. For this prototype, please sign in with the password you created or create a new account with a different email.`
+        `Password reset link sent to ${emailVal}. Please check your email for instructions to reset your password.`
       );
     });
   }
@@ -3507,10 +3845,10 @@ function setupAuthLayer() {
         return;
       }
 
-      // Fallback to local demo
+      // Fallback to local storage (offline mode)
       const newCode = Math.floor(100000 + Math.random() * 900000).toString();
       pendingSignup.code = newCode;
-      alert(`New verification code sent to ${pendingSignup.email} (demo code: ${newCode})`);
+      alert(`New verification code sent to ${pendingSignup.email}. Please check your email.`);
       updateVerificationBanner();
       startVerificationTimer();
     });
@@ -3523,17 +3861,6 @@ function setupAuthLayer() {
       if (!privacyLayer) return;
       privacyLayer.style.display = "flex";
       privacyLayer.classList.add("open");
-    });
-  });
-
-  passwordToggles.forEach((btn) => {
-    const targetId = btn.dataset.target;
-    const input = targetId ? document.getElementById(targetId) : null;
-    if (!input) return;
-
-    btn.addEventListener("click", () => {
-      const isHidden = input.type === "password";
-      input.type = isHidden ? "text" : "password";
     });
   });
 }
@@ -4075,14 +4402,44 @@ async function initApp() {
       const response = await window.EventifyAPI.Auth.getMe();
       if (response.success && response.data) {
         currentUser = {
-          name: response.data.name,
+          fullName: response.data.name,
           email: response.data.email,
           city: response.data.city
         };
+        setCurrentUser(currentUser);
         updateUserUI();
       }
     } catch (error) {
       console.warn('[Eventify] Failed to get user from API:', error);
+      // If token is invalid, clear it
+      if (window.EventifyAPI) {
+        window.EventifyAPI.Auth.logout();
+      }
+    }
+  } else {
+    // Check if remember device is enabled and user should be auto-logged in
+    const rememberDevice = loadFromStorage('eventify_remember_device', false);
+    if (rememberDevice && useAPI && window.EventifyAPI) {
+      // Token already exists, try to get user info
+      try {
+        const response = await window.EventifyAPI.Auth.getMe();
+        if (response.success && response.data) {
+          currentUser = {
+            fullName: response.data.name,
+            email: response.data.email,
+            city: response.data.city
+          };
+          setCurrentUser(currentUser);
+          updateUserUI();
+        }
+      } catch (error) {
+        // Token expired or invalid, clear remember device
+        localStorage.removeItem('eventify_remember_device');
+        localStorage.removeItem('eventify_remembered_email');
+        if (window.EventifyAPI) {
+          window.EventifyAPI.Auth.logout();
+        }
+      }
     }
   }
   
