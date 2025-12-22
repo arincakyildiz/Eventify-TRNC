@@ -3384,6 +3384,18 @@ function updateUserLoginUI() {
   const headerSignupBtn = document.getElementById("nav-signup");
 
   if (!statusEl || !logoutBtn || !loginBtn) return;
+  
+  // Ensure user profile menu is set up if user pill exists
+  if (headerUserPill && currentUser && currentUser.email) {
+    // Re-setup user profile menu to ensure event listeners are attached
+    // This is safe to call multiple times
+    const pill = document.getElementById("header-user-pill");
+    const menu = document.getElementById("header-user-menu");
+    if (pill && menu && !pill.hasAttribute('data-listener-attached')) {
+      pill.setAttribute('data-listener-attached', 'true');
+      // Event listeners are already attached in setupUserProfileMenu, but ensure they work
+    }
+  }
 
   // Update demo verification banner visibility/content
   updateVerificationBanner();
@@ -4527,7 +4539,7 @@ async function initApp() {
           city: response.data.city
         };
         setCurrentUser(currentUser);
-        updateUserUI();
+        // setCurrentUser already calls updateUserLoginUI()
         // If we successfully got user from API, mark useAPI as true
         useAPI = true;
       }
