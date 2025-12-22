@@ -3306,9 +3306,12 @@ function setupAdminAuth() {
         return;
       }
 
-      // Try API login if available
-      if (useAPI && window.EventifyAPI) {
-        (async () => {
+      // Try API login if available, then fallback to demo credentials
+      (async () => {
+        let apiLoginSuccess = false;
+        
+        // Try API login first
+        if (window.EventifyAPI) {
           try {
             const response = await window.EventifyAPI.Admin.login(email, password);
             if (response.success) {
@@ -3319,28 +3322,29 @@ function setupAdminAuth() {
               renderAdminEventList();
               renderStatistics();
               renderAdminUserList();
+              apiLoginSuccess = true;
+              return;
             }
           } catch (error) {
             console.log("API admin login failed:", error);
-            alert(error.message || "Invalid credentials. Please try again.");
+            // Continue to fallback demo credentials
           }
-        })();
-        return;
-      }
+        }
 
-      // Fallback to demo credentials
-      if (email === "admin@eventify.trnc" && password === "admin123") {
-        console.log("Admin credentials valid, logging in...");
-        setAdminAuthenticated(true);
-        showView("view-admin-dashboard");
-        renderAdminEventList();
-        renderStatistics();
-        renderAdminUserList();
-        console.log("Admin login successful");
-      } else {
-        console.log("Invalid credentials");
-        alert("Invalid credentials. Please check your email and password.");
-      }
+        // Fallback to demo credentials (always available, even if API is used)
+        if (!apiLoginSuccess && email === "admin@eventify.trnc" && password === "admin123") {
+          console.log("Admin credentials valid, logging in with demo credentials...");
+          setAdminAuthenticated(true);
+          showView("view-admin-dashboard");
+          renderAdminEventList();
+          renderStatistics();
+          renderAdminUserList();
+          console.log("Admin login successful");
+        } else if (!apiLoginSuccess) {
+          console.log("Invalid credentials");
+          alert("Invalid credentials. Please check your email and password.\n\nDemo credentials:\nadmin@eventify.trnc / admin123");
+        }
+      })();
     });
   } else {
     console.warn("Admin login form not found. This is normal if you're not on the admin page.");
