@@ -21,10 +21,17 @@ const getAPIBaseURL = () => {
     
     const hostname = window.location.hostname;
     
-    // Priority 3: Production domain - use relative URL (assumes backend on same domain)
-    // For separate backend, use data-api-base-url attribute instead
+    // Priority 3: Production domain - check if it's Vercel
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return '/api'; // Relative URL if backend is on same domain
+      // Check if we're on Vercel
+      if (hostname.includes('vercel.app') || hostname.includes('vercel.com')) {
+        // On Vercel, try to detect if backend is on same domain or separate
+        // If backend is separate, it should be set via data-api-base-url
+        // Otherwise, assume same domain (monorepo deployment)
+        return '/api'; // Relative URL if backend is on same domain
+      }
+      // Other production domains - use relative URL
+      return '/api';
     }
   }
   
