@@ -664,6 +664,19 @@ function setupUserProfileMenu() {
   const headerNotifBtn = document.getElementById("header-notifications-btn");
   const headerNotifMenu = document.getElementById("header-notifications-menu");
 
+  // Setup notification button FIRST (before pill/menu check)
+  if (headerNotifBtn) {
+    headerNotifBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = document.body.classList.toggle("ef-notifications-open");
+      if (isOpen && pill) {
+        document.body.classList.remove("ef-user-menu-open");
+        pill.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
   if (!pill || !menu) return;
 
   pill.addEventListener("click", (e) => {
@@ -724,18 +737,6 @@ function setupUserProfileMenu() {
     document.body.classList.remove("ef-user-menu-open");
     pill.setAttribute("aria-expanded", "false");
   });
-
-  if (headerNotifBtn) {
-    headerNotifBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const isOpen = document.body.classList.toggle("ef-notifications-open");
-      if (isOpen) {
-        document.body.classList.remove("ef-user-menu-open");
-        pill.setAttribute("aria-expanded", "false");
-      }
-    });
-  }
 
   if (headerNotifMenu) {
     headerNotifMenu.addEventListener("click", (e) => {
