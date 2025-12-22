@@ -63,18 +63,32 @@ const updateEventDates = async () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to start of day
 
-    let daysToAdd = 7; // Start from 7 days from today (1 week ahead)
+    // Target dates: 24, 26, 27, 28, 29, 30, 31 December, then 1 Jan onwards
+    const decemberDates = [24, 26, 27, 28, 29, 30, 31]; // December 2025
+    const newYearStartDate = new Date(2026, 0, 1); // January 1, 2026
+    
     let updatedCount = 0;
+    let decemberIndex = 0;
+    let januaryDay = 1;
 
     console.log(`\n📅 Today is: ${today.toLocaleDateString()}\n`);
 
-    for (const event of events) {
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
       const originalDate = new Date(event.date);
       const originalTime = originalDate;
       
-      // Set new date starting from 7 days from today
-      const newDate = new Date(today);
-      newDate.setDate(newDate.getDate() + daysToAdd);
+      let newDate;
+      
+      // First half: December 24-31
+      if (i < decemberDates.length && decemberIndex < decemberDates.length) {
+        newDate = new Date(2025, 11, decemberDates[decemberIndex]); // Month 11 = December
+        decemberIndex++;
+      } else {
+        // Second half: January 1 onwards
+        newDate = new Date(2026, 0, januaryDay); // Month 0 = January
+        januaryDay++;
+      }
       
       // Preserve the original time (hours and minutes)
       newDate.setHours(originalTime.getHours(), originalTime.getMinutes(), 0, 0);
@@ -83,11 +97,10 @@ const updateEventDates = async () => {
       console.log(`✅ Updated "${event.title}":`);
       console.log(`   ${originalDate.toLocaleDateString()} ${originalDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} → ${newDate.toLocaleDateString()} ${newDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`);
       updatedCount++;
-      daysToAdd += 3; // Add 3 days between each event
     }
 
     console.log(`\n✅ Successfully updated ${updatedCount} event dates`);
-    console.log(`✅ All events moved to dates starting from ${new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()} onwards`);
+    console.log(`✅ Events distributed: December 24-31, 2025 and January 1+ onwards, 2026`);
     console.log('✅ Event date update completed!');
     process.exit(0);
   } catch (error) {

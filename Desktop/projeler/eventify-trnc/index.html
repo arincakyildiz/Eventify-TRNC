@@ -981,12 +981,23 @@
                     </div>
 
                     <div class="ef-form-group">
-                      <label for="event-image">Poster / Image URL</label>
-                      <input
-                        type="url"
-                        id="event-image"
-                        placeholder="nicosia.jpg"
-                      />
+                      <label for="event-image-file">Event Poster</label>
+                      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <input
+                          type="file"
+                          id="event-image-file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          style="padding: 0.5rem; border: 1px dashed #cbd5e1; border-radius: 0.5rem; background: #f8fafc;"
+                        />
+                        <div id="image-upload-status" style="font-size: 0.75rem; color: #64748b;"></div>
+                        <div id="image-preview" style="display: none; margin-top: 0.5rem;">
+                          <img id="image-preview-img" style="max-width: 200px; max-height: 150px; border-radius: 0.5rem; border: 1px solid #e2e8f0;" />
+                        </div>
+                        <input type="hidden" id="event-image" />
+                      </div>
+                      <small style="color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                        Upload an image (max 5MB) - JPG, PNG, GIF, WebP
+                      </small>
                     </div>
                   </div>
 

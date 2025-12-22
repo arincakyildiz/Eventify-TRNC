@@ -239,6 +239,8 @@ const AdminAPI = {
   // Upload event image
   async uploadEventImage(file) {
     const url = `${API_BASE_URL}/upload/event-image`;
+    console.log('[Eventify] Uploading image to:', url);
+    console.log('[Eventify] Admin token exists:', !!adminToken);
     
     const formData = new FormData();
     formData.append('image', file);
@@ -247,20 +249,30 @@ const AdminAPI = {
     if (adminToken) {
       headers['Authorization'] = `Bearer ${adminToken}`;
     }
+    // Don't set Content-Type for FormData - browser will set it automatically with boundary
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: formData
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData
+      });
 
-    const data = await response.json();
+      console.log('[Eventify] Upload response status:', response.status);
+      
+      const data = await response.json();
+      console.log('[Eventify] Upload response data:', data);
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Upload failed');
+      if (!response.ok) {
+        console.error('[Eventify] Upload failed:', response.status, data);
+        throw new Error(data.message || `Upload failed: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('[Eventify] Upload error:', error);
+      throw error;
     }
-
-    return data;
   }
 };
 
