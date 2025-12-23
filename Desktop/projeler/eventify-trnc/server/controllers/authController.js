@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const crypto = require('crypto');
-const { sendVerificationCode } = require('../utils/emailService');
+const { sendVerificationCode, sendPasswordResetEmail } = require('../utils/emailService');
 
 // @desc    Register user (Step 1: Send verification code)
 // @route   POST /api/auth/register
@@ -216,6 +216,99 @@ exports.getMe = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: user
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Send password reset email
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      // Don't reveal existence; respond success
+      return res.status(200).json({
+        success: true,
+        message: 'If that email exists, a reset link has been sent'
+      });
+    }
+
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    user.resetPasswordToken = resetTokenHash;
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save({ validateBeforeSave: false });
+
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:8000';
+    // Remove trailing slash if any before appending path
+    const cleanBase = baseUrl.replace(/\/$/, '');
+    const resetUrl = `${cleanBase}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl, user.name);
+    } catch (emailError) {
+      console.error('Failed to send reset email:', emailError);
+      // still respond success to avoid info leak
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'If that email exists, a reset link has been sent'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { token, email, password } = req.body;
+
+    if (!token || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token, email, and new password are required'
+      });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      resetPasswordToken: tokenHash,
+      resetPasswordExpire: { $gt: Date.now() }
+    }).select('+resetPasswordToken +resetPasswordExpire');
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful'
     });
   } catch (error) {
     next(error);
