@@ -2,11 +2,11 @@
   "version": 2,
   "functions": {
     "api/index.js": {
-      "runtime": "nodejs24.x",
+      "runtime": "nodejs18.x",
       "maxDuration": 10
     },
     "api/ping.js": {
-      "runtime": "nodejs24.x",
+      "runtime": "nodejs18.x",
       "maxDuration": 5
     }
   },
