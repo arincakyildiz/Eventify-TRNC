@@ -23,8 +23,8 @@ if (fs.existsSync(envPath)) {
 const serverPath = path.join(__dirname, '..', 'server', 'server.js');
 const app = require(serverPath);
 
-// Export Express app for Vercel
+// Export Express app for Vercel (support both module and handler signatures)
 module.exports = app;
 module.exports.default = app;
-module.exports.handler = app;
+module.exports.handler = (req, res) => app(req, res);
 
