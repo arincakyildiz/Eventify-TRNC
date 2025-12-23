@@ -23,6 +23,8 @@ if (fs.existsSync(envPath)) {
 const serverPath = path.join(__dirname, '..', 'server', 'server.js');
 const app = require(serverPath);
 
-// Export a handler that proxies to Express app (Vercel Node functions expect a handler)
-module.exports = (req, res) => app(req, res);
+// Export Express app for Vercel
+module.exports = app;
+module.exports.default = app;
+module.exports.handler = app;
 
