@@ -1,0 +1,17 @@
+# Environment variables
+server/.env
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Node modules (if any in root)
+node_modules/
+
+# Uploads
+server/uploads/
