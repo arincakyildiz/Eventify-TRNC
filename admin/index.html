@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eventify TRNC - Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css?v=20250127.4" />
+  </head>
+  <body
+    data-initial-view="view-admin-login"
+    data-images-base="../assets/images/"
+    class="admin-theme"
+  >
+    <header class="ef-header">
+      <div class="ef-container ef-header-inner">
+        <div class="ef-header-left">
+          <div class="ef-logo">
+            <img
+              src="../assets/images/eventify-trnc-logo.png"
+              alt="Eventify TRNC logo"
+              class="ef-logo-img"
+            />
+            <div class="ef-logo-text">
+              EVENTIFY <span>TRNC</span>
+            </div>
+          </div>
+          <nav class="ef-nav">
+            <button class="ef-nav-link" data-view="view-events">
+              Home
+            </button>
+            <button class="ef-nav-link" data-view="view-events">Events</button>
+            <button class="ef-nav-link" data-view="view-about">Places</button>
+            <button class="ef-nav-link" data-view="view-registrations">
+              News
+            </button>
+          </nav>
+        </div>
+        <div class="ef-header-right">
+          <button class="ef-auth-btn ef-auth-btn-ghost" type="button">
+            Sign Up
+          </button>
+          <button
+            class="ef-auth-btn ef-auth-btn-primary"
+            type="button"
+            id="nav-admin-login"
+          >
+            Login
+          </button>
+          <button
+            class="ef-nav-toggle"
+            type="button"
+            aria-label="Toggle navigation"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="ef-main">
+      <div class="ef-container">
+        <!-- PUBLIC: EVENTS (HOME) -->
+        <section id="view-events" class="ef-view">
+          <section class="ef-hero">
+            <div class="ef-hero-text">
+              <p class="ef-hero-kicker">Now community events;</p>
+              <h1>Find your next event — instantly</h1>
+              <p>
+                Discover festivals, workshops, sports tournaments, and cultural
+                activities organized by municipalities across Northern Cyprus.
+              </p>
+              <button type="button" class="ef-btn ef-hero-cta">
+                Explore Events
+              </button>
+            </div>
+          </section>
+
+          <section class="ef-category-bar">
+            <div class="ef-category-bar-header">
+              <span class="ef-category-label">Event Categories</span>
+            </div>
+            <div class="ef-category-pill-row">
+              <button class="ef-category-pill active" data-category="">
+                All
+              </button>
+              <button class="ef-category-pill" data-category="Sports">
+                Sports
+              </button>
+              <button class="ef-category-pill" data-category="Culture">
+                Culture
+              </button>
+              <button class="ef-category-pill" data-category="Education">
+                Education
+              </button>
+              <button class="ef-category-pill" data-category="Environment">
+                Environment
+              </button>
+              <button
+                class="ef-category-pill"
+                data-category="Music &amp; Entertainment"
+              >
+                Music &amp; Entertainment
+              </button>
+            </div>
+          </section>
+
+          <div class="ef-view-header">
+            <div>
+              <h2>Upcoming Events</h2>
+              <p>
+                Filter by city, date, or search by event title.
+              </p>
+            </div>
+            <div class="ef-filters">
+              <select id="filter-city">
+                <option value="">All Cities</option>
+                <option value="Nicosia">Nicosia</option>
+                <option value="Famagusta">Famagusta</option>
+                <option value="Kyrenia">Kyrenia</option>
+                <option value="Morphou">Morphou</option>
+                <option value="Iskele">Iskele</option>
+                <option value="Lefke">Lefke</option>
+              </select>
+              <select id="filter-category" class="ef-filter-hidden">
+                <option value="">All Categories</option>
+                <option value="Sports">Sports</option>
+                <option value="Culture">Culture</option>
+                <option value="Education">Education</option>
+                <option value="Environment">Environment</option>
+                <option value="Music &amp; Entertainment">
+                  Music &amp; Entertainment
+                </option>
+              </select>
+              <input
+                type="date"
+                id="filter-date"
+                aria-label="Filter by date"
+              />
+              <input
+                type="text"
+                id="filter-search"
+                placeholder="Search events..."
+                aria-label="Search events"
+              />
+              <button id="clear-filters" class="ef-btn ef-btn-ghost">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <section id="upcoming-notifications" class="ef-notifications">
+            <!-- Filled by JS -->
+          </section>
+
+          <section id="event-list" class="ef-grid ef-event-grid">
+            <!-- Filled by JS -->
+          </section>
+        </section>
+
+        <!-- reuse About, Registrations, Admin views from main page -->
+        <!-- include same markup as index -->
+        <section id="view-about" class="ef-view">
+          <div class="ef-view-header">
+            <div>
+              <h1>About Eventify TRNC</h1>
+              <p>
+                Eventify TRNC is a prototype community event management platform
+                designed for municipalities and citizens in the Turkish Republic
+                of Northern Cyprus.
+              </p>
+            </div>
+          </div>
+
+          <section class="ef-grid ef-grid-2">
+            <article class="ef-card">
+              <h2 class="ef-section-title">For citizens</h2>
+              <p class="ef-text-muted">
+                Citizens can discover local events, register for activities, and
+                keep track of their upcoming participations in one place.
+              </p>
+              <ul class="ef-about-list">
+                <li>Browse a calendar of community events.</li>
+                <li>Filter by city, category, and date.</li>
+                <li>Register or cancel participation with one click.</li>
+              </ul>
+            </article>
+            <article class="ef-card">
+              <h2 class="ef-section-title">For municipalities</h2>
+              <p class="ef-text-muted">
+                Municipal staff can manage event information and monitor basic
+                statistics about attendance and popular event types.
+              </p>
+              <ul class="ef-about-list">
+                <li>Create, edit, and publish events.</li>
+                <li>See registrations per event.</li>
+                <li>Review popular categories and participation trends.</li>
+              </ul>
+            </article>
+          </section>
+        </section>
+
+        <section id="view-registrations" class="ef-view">
+          <div class="ef-view-header">
+            <div>
+              <h1>My Registrations</h1>
+              <p>
+                Sign in with your email to see and manage the events you are
+                registered for.
+              </p>
+            </div>
+          </div>
+
+          <div class="ef-grid ef-grid-2">
+            <article class="ef-card">
+              <h2 class="ef-section-title">Account</h2>
+              <form id="user-login-form" class="ef-form">
+                <div class="ef-form-group">
+                  <label for="user-email">Email address</label>
+                  <input
+                    type="email"
+                    id="user-email"
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+                <div class="ef-form-actions">
+                  <button type="submit" class="ef-btn" id="user-login-btn">
+                    Sign in
+                  </button>
+                  <button
+                    type="button"
+                    class="ef-btn ef-btn-ghost"
+                    id="user-logout-btn"
+                  >
+                    Sign out
+                  </button>
+                </div>
+                <p
+                  class="ef-text-muted"
+                  id="user-login-status"
+                  style="font-size: 0.8rem"
+                ></p>
+              </form>
+            </article>
+
+            <article class="ef-card">
+              <h2 class="ef-section-title">Registered Events</h2>
+              <section id="my-registrations-list" class="ef-list">
+                <!-- Filled by JS -->
+              </section>
+            </article>
+          </div>
+        </section>
+
+        <section id="view-admin-login" class="ef-view active">
+          <div class="ef-admin-login">
+            <div class="ef-admin-login-hero">
+              <span class="ef-admin-login-chip">Municipality Console</span>
+              <h1>Administrator Login</h1>
+              <p>
+                Access the centralized workspace for managing events, users, and
+                notifications across every district.
+              </p>
+              <ul class="ef-admin-login-list">
+                <li>Track live registrations and capacity</li>
+                <li>Publish new municipal events in minutes</li>
+                <li>Coordinate with departments using shared notes</li>
+              </ul>
+            </div>
+
+            <div class="ef-admin-login-card">
+              <div class="ef-admin-login-badge">
+                <span>Secure access</span>
+                <small>For authorized municipal staff</small>
+              </div>
+              <h2>Sign in</h2>
+              <p class="ef-admin-login-subtitle">
+                Use your @eventify.trnc account to continue.
+              </p>
+              <form id="admin-login-form" class="ef-form ef-admin-login-form">
+                <div class="ef-form-group">
+                  <label for="admin-email">Email address</label>
+                  <div class="ef-input-icon">
+                    <span>@</span>
+                    <input
+                      type="email"
+                      id="admin-email"
+                      placeholder="admin@eventify.trnc"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="ef-form-group">
+                  <label for="admin-password">Password</label>
+                  <div class="ef-input-icon">
+                    <span>••</span>
+                    <input
+                      type="password"
+                      id="admin-password"
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="ef-admin-login-helpers">
+                  <label class="ef-checkbox">
+                    <input type="checkbox" id="admin-remember" />
+                    <span>Remember device</span>
+                  </label>
+                  <button type="button" class="ef-link-btn">Forgot password?</button>
+                </div>
+                <p class="ef-text-muted ef-admin-login-demo">
+                  Demo credentials:
+                  <strong>admin@eventify.trnc</strong> / <strong>admin123</strong>
+                </p>
+                <div class="ef-form-actions">
+                  <button type="submit" class="ef-btn ef-btn-primary">
+                    Login
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-admin-dashboard" class="ef-view">
+          <div class="ef-view-header">
+            <div>
+              <h1>Municipality Admin Panel</h1>
+              <p>Manage community events and review participation statistics.</p>
+            </div>
+            <button class="ef-btn ef-btn-ghost" id="admin-logout-btn">
+              Logout
+            </button>
+          </div>
+
+          <div class="ef-admin-layout">
+            <aside class="ef-admin-sidebar">
+              <h2 class="ef-admin-sidebar-title">Menu</h2>
+              <button
+                class="ef-admin-link active"
+                data-admin-section="admin-events"
+              >
+                Events
+              </button>
+              <button class="ef-admin-link" data-admin-section="admin-create">
+                Create Event
+              </button>
+              <button class="ef-admin-link" data-admin-section="admin-stats">
+                Statistics
+              </button>
+              <button class="ef-admin-link" data-admin-section="admin-users">
+                Users
+              </button>
+            </aside>
+
+            <div class="ef-admin-content">
+              <div class="ef-grid ef-grid-3 ef-admin-summary">
+                <div class="ef-stat-card">
+                  <h3>Total Events</h3>
+                  <p id="stat-total-events" class="ef-stat-value">0</p>
+                </div>
+                <div class="ef-stat-card">
+                  <h3>Total Registrations</h3>
+                  <p id="stat-total-registrations" class="ef-stat-value">0</p>
+                </div>
+                <div class="ef-stat-card">
+                  <h3>Average Participants per Event</h3>
+                  <p id="stat-average-participants" class="ef-stat-value">
+                    0
+                  </p>
+                </div>
+              </div>
+
+              <section
+                id="admin-section-events"
+                class="ef-admin-section active"
+              >
+                <h2 class="ef-section-title">Events</h2>
+                <div id="admin-event-list" class="ef-list"></div>
+              </section>
+
+              <section id="admin-section-create" class="ef-admin-section">
+                <h2 class="ef-section-title">Create / Edit Event</h2>
+                <form id="event-form" class="ef-form">
+                  <input type="hidden" id="event-id" />
+
+                  <div class="ef-form-group">
+                    <label for="event-title">Title</label>
+                    <input
+                      type="text"
+                      id="event-title"
+                      placeholder="e.g. Spring Culture Festival"
+                      required
+                    />
+                  </div>
+
+                  <div class="ef-form-row">
+                    <div class="ef-form-group">
+                      <label for="event-city">City</label>
+                      <select id="event-city" required>
+                        <option value="">Select city</option>
+                        <option value="Nicosia">Nicosia</option>
+                        <option value="Famagusta">Famagusta</option>
+                        <option value="Kyrenia">Kyrenia</option>
+                        <option value="Morphou">Morphou</option>
+                        <option value="Iskele">Iskele</option>
+                        <option value="Lefke">Lefke</option>
+                      </select>
+                    </div>
+
+                    <div class="ef-form-group">
+                      <label for="event-category">Category</label>
+                      <select id="event-category" required>
+                        <option value="">Select category</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Culture">Culture</option>
+                        <option value="Education">Education</option>
+                        <option value="Environment">Environment</option>
+                        <option value="Music &amp; Entertainment">
+                          Music &amp; Entertainment
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="ef-form-row">
+                    <div class="ef-form-group">
+                      <label for="event-date">Date</label>
+                      <input type="date" id="event-date" required />
+                    </div>
+
+                    <div class="ef-form-group">
+                      <label for="event-time">Time</label>
+                      <input type="time" id="event-time" required />
+                    </div>
+                  </div>
+
+                  <div class="ef-form-group">
+                    <label for="event-location">Location</label>
+                    <input
+                      type="text"
+                      id="event-location"
+                      placeholder="e.g. Nicosia City Park"
+                      required
+                    />
+                  </div>
+
+                  <div class="ef-form-row">
+                    <div class="ef-form-group">
+                      <label for="event-capacity">Participant limit</label>
+                      <input
+                        type="number"
+                        id="event-capacity"
+                        min="1"
+                        placeholder="e.g. 200"
+                        required
+                      />
+                    </div>
+
+                    <div class="ef-form-group">
+                      <label for="event-image-file">Event Poster</label>
+                      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <input
+                          type="file"
+                          id="event-image-file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          style="padding: 0.5rem; border: 1px dashed #cbd5e1; border-radius: 0.5rem; background: #f8fafc;"
+                        />
+                        <div id="image-upload-status" style="font-size: 0.75rem; color: #64748b;"></div>
+                        <div id="image-preview" style="display: none; margin-top: 0.5rem;">
+                          <img id="image-preview-img" style="max-width: 200px; max-height: 150px; border-radius: 0.5rem; border: 1px solid #e2e8f0;" />
+                        </div>
+                        <input type="hidden" id="event-image" />
+                      </div>
+                      <small style="color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                        Upload an image (max 5MB) - JPG, PNG, GIF, WebP
+                      </small>
+                    </div>
+                  </div>
+
+                  <div class="ef-form-group">
+                    <label for="event-description">Description</label>
+                    <textarea
+                      id="event-description"
+                      rows="3"
+                      placeholder="Short description of the event..."
+                      required
+                    ></textarea>
+                  </div>
+
+                  <div class="ef-form-actions">
+                    <button type="submit" class="ef-btn" id="save-event-btn">
+                      Save Event
+                    </button>
+                    <button
+                      type="button"
+                      class="ef-btn ef-btn-ghost"
+                      id="reset-event-form"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              <section id="admin-section-stats" class="ef-admin-section">
+                <h2 class="ef-section-title">Statistics</h2>
+                <div class="ef-grid ef-grid-2 ef-mt-lg">
+                  <div>
+                    <h3 class="ef-section-title">Attendees per Event</h3>
+                    <div id="stat-event-attendance" class="ef-list"></div>
+                  </div>
+                  <div>
+                    <h3 class="ef-section-title">Most Popular Categories</h3>
+                    <div id="stat-popular-categories" class="ef-list"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section id="admin-section-users" class="ef-admin-section">
+                <h2 class="ef-section-title">User Management</h2>
+                <div class="ef-grid ef-grid-2">
+                  <article class="ef-card">
+                    <h3 class="ef-section-title">Add / Edit User</h3>
+                    <p class="ef-text-muted" style="font-size: 0.875rem; margin-bottom: 1.5rem;">
+                      Click "Edit" on any user below to modify their information, or fill the form to create a new user.
+                    </p>
+                    <form id="managed-user-form" class="ef-form">
+                      <input type="hidden" id="managed-user-id" />
+                      <div class="ef-form-group">
+                        <label for="managed-user-name">Full Name</label>
+                        <input
+                          type="text"
+                          id="managed-user-name"
+                          placeholder="e.g. Ayşe Kara"
+                          required
+                        />
+                      </div>
+                      <div class="ef-form-group">
+                        <label for="managed-user-email">Email Address</label>
+                        <input
+                          type="email"
+                          id="managed-user-email"
+                          placeholder="ayse@example.com"
+                          required
+                        />
+                      </div>
+                      <div class="ef-form-row">
+                        <div class="ef-form-group">
+                          <label for="managed-user-city">City</label>
+                          <input
+                            type="text"
+                            id="managed-user-city"
+                            placeholder="Nicosia"
+                            required
+                          />
+                        </div>
+                        <div class="ef-form-group">
+                          <label for="managed-user-role">Role</label>
+                          <select id="managed-user-role">
+                            <option value="citizen">Citizen</option>
+                            <option value="municipality">
+                              Municipality Staff
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="ef-form-actions">
+                        <button type="submit" class="ef-btn">
+                          Save User
+                        </button>
+                        <button
+                          type="button"
+                          class="ef-btn ef-btn-ghost"
+                          id="managed-user-reset"
+                        >
+                          Clear Form
+                        </button>
+                      </div>
+                    </form>
+                  </article>
+                  <article class="ef-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                      <h3 class="ef-section-title" style="margin: 0;">Existing Users</h3>
+                      <span class="ef-text-muted" id="user-count-badge" style="font-size: 0.875rem;"></span>
+                    </div>
+                    <div id="admin-user-list" class="ef-list"></div>
+                  </article>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="ef-footer">
+      <div class="ef-container ef-footer-content">
+        <div class="ef-footer-brand">
+          <div class="ef-footer-title">Eventify TRNC</div>
+          <p>Admin workspace for TRNC municipality event management.</p>
+        </div>
+        <div class="ef-footer-links">
+          <a href="../index.html">Website</a>
+          <a href="#admin-section-events">Events</a>
+          <a href="#admin-section-users">Users</a>
+        </div>
+        <div class="ef-footer-meta">
+          <span>© 2025 Eventify TRNC</span>
+          <span class="ef-footer-pill">Admin Console</span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Force cache busting with timestamp
+      const cacheBuster = '?v=' + Date.now();
+      
+      // Load API service first
+      const apiScript = document.createElement('script');
+      apiScript.src = '../assets/js/api.js' + cacheBuster;
+      apiScript.onload = function() {
+        console.log('[Eventify] api.js loaded successfully');
+        
+        // Then load app.js
+        const appScript = document.createElement('script');
+        appScript.src = '../assets/js/app.js' + cacheBuster;
+        appScript.onerror = function() {
+          console.error('[Eventify] Failed to load app.js');
+          alert('JavaScript dosyası yüklenemedi. Lütfen sayfayı yenileyin.');
+        };
+        appScript.onload = function() {
+          console.log('[Eventify] app.js loaded successfully');
+          if (typeof initApp === 'function' && document.readyState !== 'loading') {
+            console.log('[Eventify] DOM already loaded, calling initApp');
+            initApp();
+          }
+        };
+        document.head.appendChild(appScript);
+      };
+      apiScript.onerror = function() {
+        console.error('[Eventify] Failed to load api.js');
+      };
+      document.head.appendChild(apiScript);
+    </script>
+  </body>
+</html>
+
