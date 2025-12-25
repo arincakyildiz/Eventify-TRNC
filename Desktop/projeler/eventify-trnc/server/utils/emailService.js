@@ -102,7 +102,78 @@ const sendVerificationCode = async (email, code, name = 'User') => {
   }
 };
 
+/**
+ * Send password reset email with link
+ * @param {string} email - Recipient email
+ * @param {string} resetUrl - Password reset URL
+ * @param {string} name - User name
+ */
+const sendPasswordResetEmail = async (email, resetUrl, name = 'User') => {
+  try {
+    const mailOptions = {
+      from: `"Eventify TRNC" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Reset Your Password - Eventify TRNC',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+            .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px; }
+            .button { display: inline-block; padding: 12px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Eventify TRNC</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${name},</h2>
+              <p>You requested to reset your Eventify TRNC account password.</p>
+              <p>Click the button below to reset your password. This link will expire in 10 minutes.</p>
+              <a class="button" href="${resetUrl}">Reset Password</a>
+              <p>If the button does not work, copy and paste this URL into your browser:</p>
+              <p>${resetUrl}</p>
+              <p>If you did not request this, you can ignore this email.</p>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Eventify TRNC. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `
+        Hello ${name},
+
+        You requested to reset your Eventify TRNC account password.
+
+        Reset Link: ${resetUrl}
+
+        This link will expire in 10 minutes.
+
+        If you did not request this, you can ignore this email.
+
+        © ${new Date().getFullYear()} Eventify TRNC. All rights reserved.
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
-  sendVerificationCode
+  sendVerificationCode,
+  sendPasswordResetEmail
 };
 

@@ -161,6 +161,22 @@ const AuthAPI = {
     });
   },
 
+  // Forgot password - send reset link
+  async forgotPassword(email) {
+    return fetchAPI('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+  },
+
+  // Reset password with token
+  async resetPassword({ token, email, password }) {
+    return fetchAPI('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, email, password })
+    });
+  },
+
   // Login
   async login(email, password) {
     const response = await fetchAPI('/auth/login', {

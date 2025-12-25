@@ -53,6 +53,14 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     select: false
   },
+  resetPasswordToken: {
+    type: String,
+    select: false
+  },
+  resetPasswordExpire: {
+    type: Date,
+    select: false
+  },
   role: {
     type: String,
     enum: ['citizen'],

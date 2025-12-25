@@ -2482,8 +2482,10 @@ async function deleteEvent(id) {
   // Try API if available
   if (useAPI && window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
     try {
-      await window.EventifyAPI.Events.delete(id);
-      console.log('[Eventify] Event deleted via API');
+      // Ensure we use the correct ID format (MongoDB _id)
+      const eventId = id && typeof id === 'string' ? id : (id?._id || id?.id || id);
+      await window.EventifyAPI.Events.delete(eventId);
+      console.log('[Eventify] Event deleted via API:', eventId);
       
       // Reload events from API
       await loadEventsFromAPI();
@@ -2505,7 +2507,7 @@ async function deleteEvent(id) {
   }
 
   // Fallback to localStorage
-  const index = events.findIndex((ev) => ev.id === id);
+  const index = events.findIndex((ev) => (ev._id || ev.id) === id);
   if (index >= 0) {
     events.splice(index, 1);
   }
@@ -2538,6 +2540,8 @@ function renderAdminEventList() {
   container.innerHTML = "";
 
   sorted.forEach((ev) => {
+    // Support both local events (with id) and API events (with _id)
+    const eventId = ev._id || ev.id;
     const regs = registrations[ev.id] || [];
     const item = document.createElement("div");
     item.className = "ef-list-item";
@@ -2557,9 +2561,9 @@ function renderAdminEventList() {
           }"></span>
           <span>${regs.length}/${ev.capacity}</span>
         </span>
-        <button class="ef-btn ef-btn-ghost" data-view-registrations="${ev.id}">View Registrations</button>
-        <button class="ef-btn ef-btn-ghost" data-edit-id="${ev.id}">Edit</button>
-        <button class="ef-btn ef-btn-danger" data-delete-id="${ev.id}">Delete</button>
+        <button class="ef-btn ef-btn-ghost" data-view-registrations="${eventId}">View Registrations</button>
+        <button class="ef-btn ef-btn-ghost" data-edit-id="${eventId}">Edit</button>
+        <button class="ef-btn ef-btn-danger" data-delete-id="${eventId}">Delete</button>
       </div>
     `;
 
@@ -2568,10 +2572,10 @@ function renderAdminEventList() {
     const deleteBtn = item.querySelector("[data-delete-id]");
 
     if (viewRegBtn) {
-      viewRegBtn.addEventListener("click", () => showEventRegistrations(ev.id, ev.title));
+      viewRegBtn.addEventListener("click", () => showEventRegistrations(eventId, ev.title));
     }
     editBtn.addEventListener("click", () => fillEventForm(ev));
-    deleteBtn.addEventListener("click", () => deleteEvent(ev.id));
+    deleteBtn.addEventListener("click", () => deleteEvent(eventId));
 
     container.appendChild(item);
   });
@@ -2743,7 +2747,8 @@ async function getAllRegisteredUsers() {
         // Convert API users to frontend format
         const apiUsers = response.data.map(user => ({
           id: user._id || user.id,
-          name: user.name || user.email,
+          _id: user._id, // Keep original _id for API operations
+          name: user.name || user.fullName || user.email,
           email: user.email,
           city: user.city || "Unknown",
           role: "citizen",
@@ -2883,13 +2888,16 @@ async function renderAdminUserList() {
   );
 
   sorted.forEach((user) => {
+    // Support both local users (with id) and API users (with _id)
+    const userId = user._id || user.id;
     const item = document.createElement("div");
     item.className = "ef-list-item";
     const userName = user.name || user.email || "Unknown";
     const userEmail = user.email || "No email";
     const userCity = user.city || "Unknown";
     const userRole = user.role || "citizen";
-    const isManagedUser = user.id && !user.id.startsWith("reg-") && !user.id.startsWith("auth-");
+    // Check if user can be deleted (not registration-based or auth-based IDs)
+    const isManagedUser = userId && !userId.startsWith("reg-") && !userId.startsWith("auth-");
     
     item.innerHTML = `
       <div class="ef-list-item-main">
@@ -2901,8 +2909,8 @@ async function renderAdminUserList() {
           <span class="ef-chip-dot"></span>
           <span>${userRole}</span>
         </span>
-        <button class="ef-btn ef-btn-ghost" data-edit-user="${user.id}" data-user-email="${userEmail}">Edit</button>
-        ${isManagedUser ? `<button class="ef-btn ef-btn-danger" data-delete-user="${user.id}">Delete</button>` : ''}
+        <button class="ef-btn ef-btn-ghost" data-edit-user="${userId}" data-user-email="${userEmail}">Edit</button>
+        ${isManagedUser ? `<button class="ef-btn ef-btn-danger" data-delete-user="${userId}">Delete</button>` : ''}
       </div>
     `;
 
@@ -2915,7 +2923,7 @@ async function renderAdminUserList() {
     if (deleteBtn) {
       deleteBtn.addEventListener("click", () => {
         if (confirm(`Are you sure you want to delete user "${userName}"?`)) {
-          deleteManagedUser(user.id);
+          deleteManagedUser(userId);
         }
       });
     }
@@ -2931,7 +2939,9 @@ function fillUserForm(user) {
   const cityField = document.getElementById("managed-user-city");
   const roleField = document.getElementById("managed-user-role");
   
-  if (idField) idField.value = user.id || "";
+  // Support both local users (with id) and API users (with _id)
+  const userId = user._id || user.id;
+  if (idField) idField.value = userId || "";
   if (nameField) nameField.value = user.name || "";
   if (emailField) emailField.value = user.email || "";
   if (cityField) cityField.value = user.city || "";
@@ -2954,34 +2964,59 @@ function resetUserForm() {
 async function deleteManagedUser(userId) {
   if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
   
-  // Try API deletion if available and user is from API
+  // Ensure we use the correct ID format - prioritize _id for API users
+  const userToDeleteId = userId && typeof userId === 'string' ? userId : (userId?._id || userId?.id || userId);
+  
+  if (!userToDeleteId) {
+    alert('Invalid user ID');
+    return;
+  }
+  
+  console.log('[Eventify] Attempting to delete user:', userToDeleteId);
+  
+  // Try API deletion first if admin is logged in
   if (window.EventifyAPI && window.EventifyAPI.Admin.isLoggedIn()) {
-    // Check if userId looks like MongoDB ID (24 hex characters) or if it's an API user
-    const isAPIUser = userId.length === 24 || /^[0-9a-fA-F]{24}$/.test(userId);
-    
-    if (isAPIUser) {
-      try {
-        await window.EventifyAPI.Admin.deleteUser(userId);
-        console.log('[Eventify] User deleted via API');
-        // Reload user list from API
-        await renderAdminUserList();
-        return;
-      } catch (error) {
-        console.error('[Eventify] API user delete failed:', error);
-        alert(error.message || 'Failed to delete user. Please try again.');
-        return;
+    try {
+      const result = await window.EventifyAPI.Admin.deleteUser(userToDeleteId);
+      console.log('[Eventify] User deleted via API:', userToDeleteId, result);
+      showSuccessNotification('User deleted successfully!');
+      // Reload user list from API
+      await renderAdminUserList();
+      return;
+    } catch (error) {
+      console.error('[Eventify] API user delete failed:', error);
+      // If it's a 404 or user not found, try local storage
+      if (error.message && (error.message.includes('not found') || error.message.includes('404'))) {
+        console.log('[Eventify] User not found in API, trying local storage...');
+      } else {
+        // For other errors, show alert but still try local storage
+        console.warn('[Eventify] API delete failed, trying local storage fallback');
+        // Don't return here, continue to local storage fallback
       }
     }
+  } else {
+    console.log('[Eventify] Admin not logged in, using local storage only');
   }
   
   // Fallback: delete from local managed users
-  const userIndex = managedUsers.findIndex((u) => u.id === userId);
+  const userIndex = managedUsers.findIndex((u) => (u._id || u.id) === userToDeleteId);
   if (userIndex >= 0) {
     managedUsers.splice(userIndex, 1);
     saveToStorage(STORAGE_KEY_MANAGED_USERS, managedUsers);
+    showSuccessNotification('User deleted successfully!');
     await renderAdminUserList();
   } else {
-    alert('User not found in local storage. If this is an API user, please ensure you are logged in as admin.');
+    // Also check in all users list (from API)
+    const allUsers = await getAllRegisteredUsers();
+    const foundUser = allUsers.find((u) => {
+      const uid = u._id || u.id;
+      return uid === userToDeleteId;
+    });
+    if (foundUser && foundUser.source === 'api') {
+      alert('This user exists in the database but could not be deleted. Please check:\n1. You are logged in as admin\n2. The backend API is running\n3. Check browser console for errors');
+    } else {
+      alert('User not found. If this is an API user, please ensure you are logged in as admin and the backend API is running.');
+    }
   }
 }
 
@@ -4160,7 +4195,7 @@ function setupAuthLayer() {
   });
 
   if (forgotLink) {
-    forgotLink.addEventListener("click", (e) => {
+    forgotLink.addEventListener("click", async (e) => {
       e.preventDefault();
       const emailInput = document.getElementById("signin-identifier");
       const emailVal = emailInput ? emailInput.value.trim() : "";
@@ -4170,6 +4205,19 @@ function setupAuthLayer() {
         return;
       }
 
+      // Prefer API reset flow
+      if (useAPI && window.EventifyAPI && window.EventifyAPI.Auth?.forgotPassword) {
+        try {
+          await window.EventifyAPI.Auth.forgotPassword(emailVal);
+          alert(`Password reset link sent to ${emailVal}. Please check your email.`);
+        } catch (err) {
+          console.error("[Eventify] Forgot password error:", err);
+          alert(err.message || "Failed to send reset link. Please try again.");
+        }
+        return;
+      }
+
+      // Local/offline fallback
       alert(
         `Password reset link sent to ${emailVal}. Please check your email for instructions to reset your password.`
       );

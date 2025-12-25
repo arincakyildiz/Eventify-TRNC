@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { register, verifyEmail, resendVerificationCode, login, getMe } = require('../controllers/authController');
+const { register, verifyEmail, resendVerificationCode, login, getMe, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
 router.post('/register', register);
@@ -8,6 +8,8 @@ router.post('/verify', verifyEmail);
 router.post('/resend-code', resendVerificationCode);
 router.post('/login', login);
 router.get('/me', protect, getMe);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 module.exports = router;
 
